@@ -1,0 +1,31 @@
+{
+  "_comment": "Hand-edited facts the GPS survey cannot capture. Coordinates are lat/lon; radius in metres.",
+
+  "stairs": [
+    {"name": "Example: steps near Amphitheatre (edit or remove)", "lat": 28.48553974, "lon": 77.19821021, "radius_m": 5}
+  ],
+
+  "parking_rules": {
+    "_comment": "Who may park where. Missing spot = everyone. Roles: student, faculty, visitor, resident",
+    "Faculty Parking": ["faculty"],
+    "Girl's Hostel UG Parking": ["resident", "faculty"],
+    "Boys' Hostel Parking": ["resident", "faculty"]
+  },
+
+  "speeds_mps": {"walk": 1.3, "wheelchair": 0.9, "bike": 4.2, "car": 5.6},
+  "park_time_s": {"bike": 60, "car": 180},
+
+  "congestion": {
+    "_comment": "Hotspots where travel is slower and less predictable during time windows (HH:MM). factor multiplies mean time; cv is the coefficient of variation.",
+    "zones": [
+      {"name": "Mess & Central Kitchen at lunch", "lat": 28.4852, "lon": 77.1993, "radius_m": 70,
+       "windows": [["12:45", "14:00"], ["19:30", "21:00"]], "factor": 1.6, "cv": 0.45},
+      {"name": "Academic blocks at class change", "lat": 28.4856, "lon": 77.1980, "radius_m": 110,
+       "windows": [["08:50", "09:10"], ["09:50", "10:10"], ["10:50", "11:10"], ["11:50", "12:10"], ["13:50", "14:10"], ["14:50", "15:10"], ["15:50", "16:10"]],
+       "factor": 1.4, "cv": 0.35},
+      {"name": "Main gate rush", "lat": 28.4816, "lon": 77.2019, "radius_m": 60,
+       "windows": [["08:30", "09:15"], ["17:00", "18:00"]], "factor": 1.8, "cv": 0.5}
+    ],
+    "base_cv": {"walk": 0.10, "bike": 0.20, "car": 0.25}
+  }
+}

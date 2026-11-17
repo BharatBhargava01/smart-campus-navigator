@@ -1,0 +1,187 @@
+{
+  "creator": "Measure Maps Online",
+  "name": "Measure Maps Online",
+  "timestamp": "Wednesday, Nov 04, 2026 11:03 am",
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "XBGzTRqPLKPgdCozlP0Z",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.20231835041339,
+            28.4823478810953
+          ],
+          [
+            77.20175666170825,
+            28.48276257048883
+          ],
+          [
+            77.20174117635601,
+            28.482746736582317
+          ]
+        ]
+      },
+      "properties": {
+        "id": "XBGzTRqPLKPgdCozlP0Z",
+        "name": "Polyline 1",
+        "description": "",
+        "stroke": "#f44444",
+        "stroke-width": 2,
+        "stroke-opacity": 1
+      }
+    },
+    {
+      "id": "1ib9Zu1vMEfKvCzW4Rva",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.1998378976582,
+          28.48477168283913
+        ]
+      },
+      "properties": {
+        "name": "Admin UG Parking",
+        "description": ""
+      }
+    },
+    {
+      "id": "7doWbyo3psEAtWzy3Pel",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19926870612598,
+          28.485079360800917
+        ]
+      },
+      "properties": {
+        "name": "UG Parking 4",
+        "description": ""
+      }
+    },
+    {
+      "id": "HDlotwhsNDFU6RFq7TGu",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19829627240827,
+          28.487057374331798
+        ]
+      },
+      "properties": {
+        "name": "UG Parking 3",
+        "description": ""
+      }
+    },
+    {
+      "id": "JSUbndlbByxE3AyJTjrE",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19820103559967,
+          28.484803975804756
+        ]
+      },
+      "properties": {
+        "name": "UG Parking 1",
+        "description": ""
+      }
+    },
+    {
+      "id": "LeT4P99iyYJhTjQJhNpi",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20174074285966,
+          28.482744241743497
+        ]
+      },
+      "properties": {
+        "name": "Boys' Hostel Parking",
+        "description": ""
+      }
+    },
+    {
+      "id": "SvT70x3UjAU8NGCmBWru",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19791627687998,
+          28.486609117988866
+        ]
+      },
+      "properties": {
+        "name": "UG Parking2 Exit",
+        "description": ""
+      }
+    },
+    {
+      "id": "dUgjfJBSGsHqYq4rBO0c",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20212828410143,
+          28.483482223165797
+        ]
+      },
+      "properties": {
+        "name": "Girl's Hostel UG Parking",
+        "description": ""
+      }
+    },
+    {
+      "id": "l7TDO3TC5JGZ4LF6AkBt",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20154891629035,
+          28.48432550669642
+        ]
+      },
+      "properties": {
+        "name": "Library UG Parking",
+        "description": ""
+      }
+    },
+    {
+      "id": "ojbxmK4esS6U6nEcWnVH",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20204427116674,
+          28.483796291131647
+        ]
+      },
+      "properties": {
+        "name": "Faculty Parking",
+        "description": ""
+      }
+    },
+    {
+      "id": "qzvqpqW6EyqcvYSq3gds",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19766139674263,
+          28.485298398890734
+        ]
+      },
+      "properties": {
+        "name": "UG Parking 2 Entry",
+        "description": ""
+      }
+    }
+  ]
+}

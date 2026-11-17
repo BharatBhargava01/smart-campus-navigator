@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sau-navigator"
+version = "1.0.0"
+description = "Route-planning agent for South Asian University (SAU) campus graph"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "SAU Navigator Team"}
+]
+keywords = [
+    "pathfinding",
+    "astar",
+    "search-algorithms",
+    "campus-navigation",
+    "routing",
+    "uncertainty",
+    "csp",
+    "simulated-annealing"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: GIS",
+]
+dependencies = [
+    "matplotlib>=3.7",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+]
+
+[project.scripts]
+sau-navigator = "navigator.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["navigator*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

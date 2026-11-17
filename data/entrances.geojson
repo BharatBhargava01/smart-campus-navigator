@@ -1,0 +1,638 @@
+{
+  "creator": "Measure Maps Online",
+  "name": "Measure Maps Online",
+  "timestamp": "Wednesday, Nov 04, 2026 8:31 am",
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "1FnxZMgaN314DGIIqzNT",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19732106474932,
+          28.486116382318265
+        ]
+      },
+      "properties": {
+        "name": "AB 4 Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "2eNHbZarZYkZIImZoEC1",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.1977769436872,
+          28.48486446269178
+        ]
+      },
+      "properties": {
+        "name": "AB2 Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "36eMOcW7c3Dj7xQGKPPB",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20087494041863,
+          28.48343914208611
+        ]
+      },
+      "properties": {
+        "name": "Ground Entrance 3",
+        "description": ""
+      }
+    },
+    {
+      "id": "39ciWaNEpNDwu57ZzzyZ",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20130513712604,
+          28.484056237937033
+        ]
+      },
+      "properties": {
+        "name": "Ground Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "5rMTIEfjkxjaBgHQIrfw",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19811770506963,
+          28.48581804978859
+        ]
+      },
+      "properties": {
+        "name": "Amphitheatre Entrance1",
+        "description": ""
+      }
+    },
+    {
+      "id": "7cJb01ESy3turwf2r7qT",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19878975010833,
+          28.485105723163727
+        ]
+      },
+      "properties": {
+        "name": "AB 6 Entrance2",
+        "description": ""
+      }
+    },
+    {
+      "id": "9Sa9L1wQaLiBmfDl6KL1",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19763322337059,
+          28.48755331729552
+        ]
+      },
+      "properties": {
+        "name": "Gate No.3",
+        "description": ""
+      }
+    },
+    {
+      "id": "9dhZvKc9s3x1ku4ZtUAM",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19952841723516,
+          28.484639580352816
+        ]
+      },
+      "properties": {
+        "name": "AB7 Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "9fCDouiYjSDGVF7ap6qV",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19791689097724,
+          28.486582319004274
+        ]
+      },
+      "properties": {
+        "name": "UG Parking2 Exit",
+        "description": ""
+      }
+    },
+    {
+      "id": "A6IBJd4faw7ggvGyY3Z0",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19785051380819,
+          28.48758536693505
+        ]
+      },
+      "properties": {
+        "name": "Utility Building Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "BFkwURUZrR28RdZWXgsA",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19942630261303,
+          28.48563309731135
+        ]
+      },
+      "properties": {
+        "name": "Central Kitchen Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "Bz5ZKnqgKfOJnUSHpUai",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19923616610203,
+          28.48479032744909
+        ]
+      },
+      "properties": {
+        "name": "Mess3 Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "C33vsuzITMcPF9Uxt1Y5",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19877387867336,
+          28.48526707586167
+        ]
+      },
+      "properties": {
+        "name": "AB6 Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "FzDJESVb3Tht3WDGw2Xk",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20181681927366,
+          28.481531561245927
+        ]
+      },
+      "properties": {
+        "name": "Gate No.1",
+        "description": ""
+      }
+    },
+    {
+      "id": "G8kx4yuf1xVDXcn58VBn",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20084642553562,
+          28.484992478141695
+        ]
+      },
+      "properties": {
+        "name": "AB8 Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "HdKAaF8WH7N7YuuxOAIS",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19777308052045,
+          28.48712884612347
+        ]
+      },
+      "properties": {
+        "name": "AB5 Entrace",
+        "description": ""
+      }
+    },
+    {
+      "id": "KLCimoHsg2iWcglZZ30n",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19883952939514,
+          28.486347417351613
+        ]
+      },
+      "properties": {
+        "name": "Conventional Centre Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "Kt3WflLakIoS5siNF6YM",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20138769448435,
+          28.4831038202269
+        ]
+      },
+      "properties": {
+        "name": "Ground Entrance 2",
+        "description": ""
+      }
+    },
+    {
+      "id": "McKWEq6jrOeKrGvr51NP",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20191082055925,
+          28.483216045316215
+        ]
+      },
+      "properties": {
+        "name": "Girl's Hostel Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "NACucXXiGhB4JP5BEfkC",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20146040927051,
+          28.482937787272082
+        ]
+      },
+      "properties": {
+        "name": "Basketball Court Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "OhVxhSUNu15Ja1W2z9fA",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.198184565168,
+          28.484787493202617
+        ]
+      },
+      "properties": {
+        "name": "UG Parking1 Entrane",
+        "description": ""
+      }
+    },
+    {
+      "id": "QHaqymoQqI9VStxFzwoq",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19727253296257,
+          28.485711597202975
+        ]
+      },
+      "properties": {
+        "name": "AB3 Entrance2",
+        "description": ""
+      }
+    },
+    {
+      "id": "S8PEPzEFxIEJhmbOwDxu",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20192865240757,
+          28.484411741643033
+        ]
+      },
+      "properties": {
+        "name": "Faculty Residence Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "SqZDxkYXeMHTQvB86yUD",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.1983421248272,
+          28.48447010258439
+        ]
+      },
+      "properties": {
+        "name": "AB1 Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "Trvm0znwAKue5vo6DKdm",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.198210206537,
+          28.48553974370025
+        ]
+      },
+      "properties": {
+        "name": "Amphitheatre Entrance 2",
+        "description": ""
+      }
+    },
+    {
+      "id": "UZSv6cagMg8hiiaouMX6",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20045700147122,
+          28.483947847290803
+        ]
+      },
+      "properties": {
+        "name": "Ground Entrance 4",
+        "description": ""
+      }
+    },
+    {
+      "id": "V2HVhX008bY8xss8Nx57",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19785813728016,
+          28.485470041765222
+        ]
+      },
+      "properties": {
+        "name": "AB3 Entrane",
+        "description": ""
+      }
+    },
+    {
+      "id": "V6l6bUlUyUWynIueImmo",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20281400742104,
+          28.48358550089188
+        ]
+      },
+      "properties": {
+        "name": "Guest House Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "aQuiS2x6YjZUfZOJ1PQs",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19806697085113,
+          28.485258821326326
+        ]
+      },
+      "properties": {
+        "name": "AB2 Entrance2",
+        "description": ""
+      }
+    },
+    {
+      "id": "d10127o5CN0p0HT0qnrf",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19800361773856,
+          28.486622763220797
+        ]
+      },
+      "properties": {
+        "name": "AB5 Entrance2",
+        "description": ""
+      }
+    },
+    {
+      "id": "eF6CRhhghjJvTHuxXtML",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19850474837868,
+          28.483978304990224
+        ]
+      },
+      "properties": {
+        "name": "Gate No.2",
+        "description": ""
+      }
+    },
+    {
+      "id": "fzOYwypNa1Vbuzug40UQ",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20186008355402,
+          28.482307287986984
+        ]
+      },
+      "properties": {
+        "name": "Health Centre Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "giT4EPuteZvfBgwuphJp",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19767282266884,
+          28.485306640255807
+        ]
+      },
+      "properties": {
+        "name": "UG Parking2 Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "h2VgzKIJRMCYWptSvSm1",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20033672031875,
+          28.484403344485255
+        ]
+      },
+      "properties": {
+        "name": "Administrative Block Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "lL4BMmv8IaJ5gchsxWvT",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19799821120863,
+          28.48639905605376
+        ]
+      },
+      "properties": {
+        "name": "AB 4 Entrance2",
+        "description": ""
+      }
+    },
+    {
+      "id": "oFIO5kyPcCDYmzPu3ZPx",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20240880061017,
+          28.48277909548466
+        ]
+      },
+      "properties": {
+        "name": "Girls' Hostel Entrance2",
+        "description": ""
+      }
+    },
+    {
+      "id": "oX8HKecOyhycVLAOJs98",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.19876848954686,
+          28.484716305476102
+        ]
+      },
+      "properties": {
+        "name": "AB1 Entrance 2",
+        "description": ""
+      }
+    },
+    {
+      "id": "pjatGm0jSpdn4COgCmKr",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20038098834378,
+          28.484751111417644
+        ]
+      },
+      "properties": {
+        "name": "Administrative Block Entrance 2",
+        "description": ""
+      }
+    },
+    {
+      "id": "rojHZwgvkvUxq8N4ss4H",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20148985257242,
+          28.482494523626727
+        ]
+      },
+      "properties": {
+        "name": "Boys' Hotel Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "t98FHKfo3YYByGTJvN4D",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20240537729617,
+          28.484038104207666
+        ]
+      },
+      "properties": {
+        "name": "Faculty Residence Entrance2",
+        "description": ""
+      }
+    },
+    {
+      "id": "xuOZRBP3x9H6RZ33S0EL",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20110532327818,
+          28.48482193789045
+        ]
+      },
+      "properties": {
+        "name": "Central Library Entrance",
+        "description": ""
+      }
+    },
+    {
+      "id": "zdZDQOvmOM2e2E0F5VZa",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.20201358563303,
+          28.482031736918998
+        ]
+      },
+      "properties": {
+        "name": "Boys' Hostel Entrance2",
+        "description": ""
+      }
+    }
+  ]
+}

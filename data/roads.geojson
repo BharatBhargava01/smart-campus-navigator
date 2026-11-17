@@ -1,0 +1,465 @@
+{
+  "creator": "Measure Maps Online",
+  "name": "Measure Maps Online",
+  "timestamp": "Wednesday, Nov 04, 2026 11:39 am",
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "6kFbZS0wRUXJtXOTew1p",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.20269945892763,
+            28.48320262818945
+          ],
+          [
+            77.20220646215473,
+            28.48350063198444
+          ],
+          [
+            77.20195072173601,
+            28.48370694055771
+          ],
+          [
+            77.20148828700627,
+            28.484054892909924
+          ],
+          [
+            77.20138669149746,
+            28.484138031797823
+          ],
+          [
+            77.20062297353468,
+            28.484633784548244
+          ],
+          [
+            77.20005142227431,
+            28.48501466238676
+          ],
+          [
+            77.19954279597219,
+            28.485365917698367
+          ],
+          [
+            77.19898330703994,
+            28.485781036105625
+          ],
+          [
+            77.19892209969878,
+            28.486092127662072
+          ],
+          [
+            77.19894553469904,
+            28.48698194857077
+          ],
+          [
+            77.19865962769576,
+            28.487220880685754
+          ],
+          [
+            77.1983877816927,
+            28.487282673386122
+          ],
+          [
+            77.19801743698552,
+            28.48744820981915
+          ],
+          [
+            77.19785504195553,
+            28.487307113382904
+          ],
+          [
+            77.19769056033198,
+            28.487233682678667
+          ],
+          [
+            77.19746080822291,
+            28.486763266018166
+          ],
+          [
+            77.19718349196728,
+            28.48615030755338
+          ],
+          [
+            77.19711415091845,
+            28.485946658205826
+          ],
+          [
+            77.1971226071439,
+            28.485820306223395
+          ],
+          [
+            77.19714283312298,
+            28.485680636232946
+          ],
+          [
+            77.19720371794632,
+            28.485384822961986
+          ],
+          [
+            77.19728151522062,
+            28.485132117501262
+          ],
+          [
+            77.19729842767156,
+            28.485063738272643
+          ],
+          [
+            77.19737622494586,
+            28.485010224062822
+          ],
+          [
+            77.19769925275862,
+            28.48477684233076
+          ],
+          [
+            77.19800299958145,
+            28.48457250211376
+          ],
+          [
+            77.19827452480128,
+            28.48438662573075
+          ],
+          [
+            77.19854343920166,
+            28.484191569915293
+          ],
+          [
+            77.19866353689505,
+            28.48410207359704
+          ],
+          [
+            77.19851994182686,
+            28.48398733461649
+          ]
+        ]
+      },
+      "properties": {
+        "id": "6kFbZS0wRUXJtXOTew1p",
+        "name": "Polyline 3",
+        "description": "",
+        "stroke": "#f44444",
+        "stroke-width": 2,
+        "stroke-opacity": 1
+      }
+    },
+    {
+      "id": "974XX19wll0dqXkflFPw",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.20195072173601,
+            28.48370694055771
+          ],
+          [
+            77.2020389985251,
+            28.48380594834819
+          ]
+        ]
+      },
+      "properties": {
+        "id": "974XX19wll0dqXkflFPw",
+        "name": "Polyline 8",
+        "description": "",
+        "stroke": "#f44444",
+        "stroke-width": 2,
+        "stroke-opacity": 1
+      }
+    },
+    {
+      "id": "BHWScyGFpULcGti2OzFN",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.19746080822291,
+            28.486763266018166
+          ],
+          [
+            77.19791568287974,
+            28.48660509852432
+          ]
+        ]
+      },
+      "properties": {
+        "id": "BHWScyGFpULcGti2OzFN",
+        "name": "Polyline 13",
+        "description": "",
+        "stroke": "#f44444",
+        "stroke-width": 2,
+        "stroke-opacity": 1
+      }
+    },
+    {
+      "id": "CkxG7TfvFpczbHcLiba7",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.20058612052594,
+            28.484658343295962
+          ],
+          [
+            77.20029990318855,
+            28.484332407128264
+          ]
+        ]
+      },
+      "properties": {
+        "id": "CkxG7TfvFpczbHcLiba7",
+        "name": "Polyline 10",
+        "description": "",
+        "stroke": "#f44444",
+        "stroke-width": 2,
+        "stroke-opacity": 1
+      }
+    },
+    {
+      "id": "HKHvaLJ8Jo6e4DjQIJ6Q",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.19842181170804,
+            28.487274938134004
+          ],
+          [
+            77.19829696642807,
+            28.48704653273307
+          ]
+        ]
+      },
+      "properties": {
+        "id": "HKHvaLJ8Jo6e4DjQIJ6Q",
+        "name": "Polyline 5",
+        "description": "",
+        "stroke": "#f44444",
+        "stroke-width": 2,
+        "stroke-opacity": 1
+      }
+    },
+    {
+      "id": "JOuJsJlldXnfhdRmaHtx",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.20231910532513,
+            28.482355884806328
+          ],
+          [
+            77.20269945892763,
+            28.48320262818945
+          ],
+          [
+            77.20288943989819,
+            28.48356522377745
+          ],
+          [
+            77.20314998522922,
+            28.484070947123534
+          ],
+          [
+            77.20212152712696,
+            28.484763790837583
+          ]
+        ]
+      },
+      "properties": {
+        "id": "JOuJsJlldXnfhdRmaHtx",
+        "name": "Polyline 2",
+        "description": "",
+        "stroke": "#f44444",
+        "stroke-width": 2,
+        "stroke-opacity": 1
+      }
+    },
+    {
+      "id": "KnrSZ3Pt8iWQDvoixcdf",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.19800299958145,
+            28.48457250211376
+          ],
+          [
+            77.19823868257036,
+            28.484825090124964
+          ]
+        ]
+      },
+      "properties": {
+        "id": "KnrSZ3Pt8iWQDvoixcdf",
+        "name": "Polyline 11",
+        "description": "",
+        "stroke": "#f44444",
+        "stroke-width": 2,
+        "stroke-opacity": 1
+      }
+    },
+    {
+      "id": "R2x477LCExsq3p5aMmH9",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.19801743698552,
+            28.48744820981915
+          ],
+          [
+            77.19762502358535,
+            28.487550625343427
+          ]
+        ]
+      },
+      "properties": {
+        "id": "R2x477LCExsq3p5aMmH9",
+        "name": "Polyline 4",
+        "description": "",
+        "stroke": "#f44444",
+        "stroke-width": 2,
+        "stroke-opacity": 1
+      }
+    },
+    {
+      "id": "VIEs6kNFZntqgjylDqgl",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.20138669149746,
+            28.484138031797823
+          ],
+          [
+            77.20156014098451,
+            28.484314913404482
+          ]
+        ]
+      },
+      "properties": {
+        "id": "VIEs6kNFZntqgjylDqgl",
+        "name": "Polyline 7",
+        "description": "",
+        "stroke": "#f44444",
+        "stroke-width": 2,
+        "stroke-opacity": 1
+      }
+    },
+    {
+      "id": "XiDXN8Eq9L5SYmDqM9ED",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.19952609055304,
+            28.48537831253188
+          ],
+          [
+            77.19928825096676,
+            28.485092101972317
+          ]
+        ]
+      },
+      "properties": {
+        "id": "XiDXN8Eq9L5SYmDqM9ED",
+        "name": "Polyline 6",
+        "description": "",
+        "stroke": "#f44444",
+        "stroke-width": 2,
+        "stroke-opacity": 1
+      }
+    },
+    {
+      "id": "gPI0cv30vcnoObTqwFOf",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.20219594837376,
+            28.483509113591158
+          ],
+          [
+            77.20213721884349,
+            28.483477113032503
+          ]
+        ]
+      },
+      "properties": {
+        "id": "gPI0cv30vcnoObTqwFOf",
+        "name": "Polyline 9",
+        "description": "",
+        "stroke": "#f44444",
+        "stroke-width": 2,
+        "stroke-opacity": 1
+      }
+    },
+    {
+      "id": "n3qzuyroGxjyfzkyMkZb",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.19737622494586,
+            28.485010224062822
+          ],
+          [
+            77.19763481264226,
+            28.48528565552254
+          ]
+        ]
+      },
+      "properties": {
+        "id": "n3qzuyroGxjyfzkyMkZb",
+        "name": "Polyline 12",
+        "description": "",
+        "stroke": "#f44444",
+        "stroke-width": 2,
+        "stroke-opacity": 1
+      }
+    },
+    {
+      "id": "x9QpjSicSO0MsPFNRxl2",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.20182918341581,
+            28.48155364574142
+          ],
+          [
+            77.20231910532513,
+            28.482355884806328
+          ],
+          [
+            77.20176208167341,
+            28.482759268251954
+          ]
+        ]
+      },
+      "properties": {
+        "id": "x9QpjSicSO0MsPFNRxl2",
+        "name": "Polyline 1",
+        "description": "",
+        "stroke": "#f44444",
+        "stroke-width": 2,
+        "stroke-opacity": 1
+      }
+    }
+  ]
+}

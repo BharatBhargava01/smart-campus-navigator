@@ -1,0 +1,1089 @@
+<title>SAU Campus Navigator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: full-bleed vector campus map; floating directions panel on the left (stacks under the map on phones). */
+:root{
+  --bg:#ffffff; --panel:#ffffff; --sunk:#f3f5f7; --ink:#18202c; --muted:#5d6777; --line:#e1e5ea;
+  --accent:#1f5fbf; --accent-ink:#ffffff; --ground:#eef0e8; --green:#dfe8d5;
+  --road:#ffffff; --roadcase:#c4cad3; --lane:#aebfd6; --lanecase:#ffffff;
+  --walk:#0f8a5f; --fetch:#5fb592; --bike:#d4620a; --car:#c2185b; --closed:#d32f2f; --surprise:#e08a00;
+  --zone:#f5a524; --explored:#e5484d; --steep:#d9a400; --good:#0f8a5f; --bad:#c62828; --warn:#b26a00;
+  --shadow:0 1px 2px rgba(20,30,50,.12),0 6px 24px rgba(20,30,50,.12);
+  --f-ui:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12151b; --panel:#1a1e25; --sunk:#232831; --ink:#e7eaf0; --muted:#9aa3b3; --line:#2d333d;
+  --accent:#7eb0ff; --accent-ink:#0d1420; --ground:#1b2027; --green:#1f2a22;
+  --road:#3b424e; --roadcase:#525a68; --lane:#4f6283; --lanecase:#1b2027;
+  --walk:#3fd29b; --fetch:#7fc9a9; --bike:#ff9b4f; --car:#ff5f96; --closed:#ff6464; --surprise:#ffb020;
+  --zone:#fbbf24; --explored:#ff6b6f; --steep:#f2c230; --good:#3fd29b; --bad:#ff6b6b; --warn:#ffb020;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.45); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12151b; --panel:#1a1e25; --sunk:#232831; --ink:#e7eaf0; --muted:#9aa3b3; --line:#2d333d;
+  --accent:#7eb0ff; --accent-ink:#0d1420; --ground:#1b2027; --green:#1f2a22;
+  --road:#3b424e; --roadcase:#525a68; --lane:#4f6283; --lanecase:#1b2027;
+  --walk:#3fd29b; --fetch:#7fc9a9; --bike:#ff9b4f; --car:#ff5f96; --closed:#ff6464; --surprise:#ffb020;
+  --zone:#fbbf24; --explored:#ff6b6f; --steep:#f2c230; --good:#3fd29b; --bad:#ff6b6b; --warn:#ffb020;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.45); color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-ui)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+#app{position:relative;height:100%;overflow:hidden}
+#map{position:absolute;inset:0;background:var(--ground);touch-action:none;user-select:none}
+#svg{width:100%;height:100%;display:block;cursor:grab}
+#svg.dragging{cursor:grabbing}
+#svg.tool{cursor:crosshair}
+
+#panel{position:absolute;top:12px;left:max(12px,env(safe-area-inset-left,0px));width:392px;max-height:calc(100% - 24px);
+  background:var(--panel);border-radius:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;z-index:5}
+.brand{display:flex;align-items:center;gap:10px;padding:14px 16px 6px}
+.brand svg{flex:none}
+.brand h1{font-size:16px;font-weight:700;margin:0;letter-spacing:-.01em}
+.brand p{margin:0;color:var(--muted);font-size:12px}
+.tabs{display:flex;gap:2px;padding:6px 10px 0;border-bottom:1px solid var(--line)}
+.tab{flex:1;border:none;background:none;padding:9px 4px 10px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.body{overflow:auto;padding:14px 16px 18px;display:flex;flex-direction:column;gap:14px}
+section[hidden]{display:none!important}
+
+.od{position:relative;display:grid;grid-template-columns:18px 1fr 34px;gap:6px 8px;align-items:center}
+.od .pin{width:12px;height:12px;border-radius:50%;justify-self:center}
+.od .pin.s{border:3px solid var(--ink);background:var(--panel)}
+.od .pin.e{background:var(--closed)}
+.od .rail{position:absolute;left:8px;top:22px;height:18px;border-left:2px dotted var(--muted)}
+select,input[type=time],input[type=number]{width:100%;border:1px solid var(--line);background:var(--sunk);border-radius:9px;padding:8px 10px;min-width:0}
+input[type=number]{padding:7px 8px}
+.iconbtn{border:1px solid var(--line);background:var(--panel);border-radius:50%;width:34px;height:34px;display:grid;place-items:center;cursor:pointer;grid-row:1/3;grid-column:3}
+.modes{display:flex;gap:6px;flex-wrap:wrap}
+.mode{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px 6px 9px;cursor:pointer;font-weight:600;font-size:13px}
+.mode svg{width:18px;height:18px}
+.mode[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.grid2>*{min-width:0}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--muted);font-weight:500;letter-spacing:.02em}
+.chk{display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer}
+.chk input{width:16px;height:16px;accent-color:var(--accent)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{border:none;background:var(--accent);color:var(--accent-ink);border-radius:9px;padding:9px 14px;font-weight:600;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+.btn.sm{padding:6px 10px;font-size:12.5px}
+.btn:disabled{opacity:.5;cursor:default}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+
+.cards{display:flex;flex-direction:column;gap:8px}
+.rcard{border:1px solid var(--line);border-radius:11px;padding:10px 12px;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 10px;background:var(--panel);text-align:left;width:100%}
+.rcard[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.rcard .t{font-size:19px;font-weight:700;letter-spacing:-.01em}
+.rcard .tag{font-size:11.5px;font-weight:600;color:var(--muted);align-self:center;text-align:right}
+.rcard .meta{grid-column:1/3;font-size:12.5px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--sunk);color:var(--muted)}
+.chip.good{color:var(--good)} .chip.bad{color:var(--bad)} .chip.warn{color:var(--warn)}
+
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+ol.steps li{display:grid;grid-template-columns:28px 1fr auto;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);align-items:start}
+ol.steps li:last-child{border-bottom:none}
+ol.steps .ic{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700}
+ol.steps .ic svg{width:16px;height:16px}
+ol.steps b{font-weight:600}
+ol.steps .d{font-size:12px;color:var(--muted);white-space:nowrap}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stats div{background:var(--sunk);border-radius:9px;padding:7px 8px;min-width:0}
+.stats span{display:block;font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+.stats b{font-family:var(--f-num);font-size:14px;font-weight:600}
+.box{background:var(--sunk);border-radius:11px;padding:12px}
+.hist{width:100%;height:64px;display:block}
+.note{font-size:12px;color:var(--muted);margin:0}
+
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:right;font-weight:600;padding:6px 6px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+td:first-child{font-family:var(--f-ui);font-weight:600}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--sunk)} tr.sel td{background:var(--sunk)}
+.bar{height:6px;border-radius:3px;background:var(--accent);opacity:.75;margin-top:3px}
+
+.stoprow{display:grid;grid-template-columns:1fr 1fr 64px 26px;gap:6px;align-items:end;padding-bottom:8px;border-bottom:1px dashed var(--line)}
+.stoprow .fp{grid-column:1/4}
+.stoprow .x{grid-column:4;grid-row:1}
+.stoprow>*{min-width:0}
+.stoprow .x{border:none;background:none;color:var(--muted);cursor:pointer;font-size:18px;padding:0 0 6px}
+.prec{display:grid;grid-template-columns:1fr auto 1fr 26px;gap:6px;align-items:center}
+.sched{display:flex;flex-direction:column;gap:0}
+.sched .it{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line)}
+.sched .n{width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:12px;font-weight:700}
+.sched .n.end{background:var(--ink);color:var(--panel)}
+.sched .n.late{background:var(--bad);color:#fff}
+.why{border-left:3px solid var(--bad);padding:6px 10px;background:var(--sunk);border-radius:0 8px 8px 0;font-size:12.5px}
+
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:none;background:var(--panel);padding:8px 4px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.clist{display:flex;flex-direction:column;gap:6px}
+.citem{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;padding:6px 10px;border-radius:8px;background:var(--sunk)}
+.citem i{font-style:normal;width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:6px}
+.log{font-size:12.5px;display:flex;flex-direction:column;gap:6px;margin:0;padding-left:18px}
+
+.mapctl{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:12px;display:flex;flex-direction:column;gap:8px;z-index:4}
+.ctl{background:var(--panel);border-radius:10px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
+.ctl button{width:38px;height:38px;border:none;background:none;cursor:pointer;font-size:18px;display:grid;place-items:center}
+.ctl button+button{border-top:1px solid var(--line)}
+.layers{position:absolute;right:max(60px,calc(env(safe-area-inset-right,0px) + 60px));top:12px;background:var(--panel);border-radius:12px;box-shadow:var(--shadow);padding:12px 14px;display:flex;flex-direction:column;gap:8px;z-index:4;width:220px}
+.legend{position:absolute;right:max(12px,env(safe-area-inset-right,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));background:var(--panel);border-radius:10px;box-shadow:var(--shadow);padding:8px 12px;font-size:11.5px;display:flex;gap:10px 14px;flex-wrap:wrap;max-width:min(520px,calc(100% - 430px));z-index:3}
+.legend span{display:inline-flex;align-items:center;gap:5px;color:var(--muted)}
+.legend i{display:inline-block;width:16px;height:4px;border-radius:2px}
+.toast{position:absolute;left:50%;transform:translateX(-50%);bottom:max(18px,env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--panel);padding:9px 14px;border-radius:9px;font-size:13px;font-weight:500;z-index:9;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
+#popup{position:absolute;z-index:6;background:var(--panel);border-radius:12px;box-shadow:var(--shadow);padding:12px 12px 10px;width:230px;transform:translate(-50%,calc(-100% - 14px))}
+#popup h3{margin:0 0 2px;font-size:14px}
+#popup p{margin:0 0 8px;font-size:12px;color:var(--muted)}
+#popup .row{gap:6px}
+#popup::after{content:"";position:absolute;left:50%;bottom:-7px;width:14px;height:14px;background:var(--panel);transform:translateX(-50%) rotate(45deg)}
+.toolhint{position:absolute;left:50%;top:max(12px,env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--ink);color:var(--panel);border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:600;z-index:4;box-shadow:var(--shadow);white-space:nowrap}
+
+/* SVG map styling */
+.e-roadcase{stroke:var(--roadcase);stroke-width:9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.e-road{stroke:var(--road);stroke-width:6.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.e-lanecase{stroke:var(--lanecase);stroke-width:5;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.e-lane{stroke:var(--lane);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.e-conn{stroke:var(--lane);stroke-width:1.5;fill:none;opacity:.8}
+.e-link{stroke:var(--muted);stroke-width:1;fill:none;stroke-dasharray:2 3;opacity:.6}
+.e-steep{stroke:var(--steep);stroke-width:4;fill:none;stroke-dasharray:5 4;stroke-linecap:round}
+.hit{stroke:transparent;stroke-width:16;fill:none;pointer-events:stroke;cursor:pointer}
+.hit:hover{stroke:var(--accent);stroke-opacity:.25}
+.c-closed{stroke:var(--closed);stroke-width:7;fill:none;stroke-linecap:round}
+.c-surprise{stroke:var(--surprise);stroke-width:7;fill:none;stroke-linecap:round;stroke-dasharray:6 5}
+.r-case{stroke:var(--panel);fill:none;stroke-width:10;stroke-linecap:round;stroke-linejoin:round}
+.r-line{fill:none;stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.r-alt{fill:none;stroke:var(--muted);stroke-width:5;opacity:.45;stroke-linecap:round;stroke-linejoin:round;cursor:pointer}
+.zone{fill:var(--zone);fill-opacity:.16;stroke:var(--zone);stroke-width:1.5;stroke-opacity:.7}
+.zone.off{fill-opacity:0;stroke-dasharray:4 4;stroke-opacity:.35}
+.lbl{font:600 11px var(--f-ui);fill:var(--ink);paint-order:stroke;stroke:var(--ground);stroke-width:3.5px;stroke-linejoin:round;pointer-events:none}
+.lbl.zl{fill:var(--warn);font-size:10.5px}
+.ent{fill:var(--panel);stroke:var(--muted);stroke-width:1.5;cursor:pointer}
+.ent:hover{stroke:var(--accent);stroke-width:2.5}
+.pk{fill:#6b4fb0;stroke:var(--panel);stroke-width:1.5}
+.gate{fill:#2e7d32;stroke:var(--panel);stroke-width:1.5}
+.ptxt{font:700 9px var(--f-ui);fill:#fff;pointer-events:none}
+.exp{fill:var(--explored);opacity:.6}
+.place-hit{fill:transparent;cursor:pointer}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+@media (max-width:760px){
+  #app{overflow:visible;height:auto}
+  #map{position:relative;height:58vh}
+  #panel{position:relative;top:auto;left:auto;width:auto;max-height:none;border-radius:0;box-shadow:none;border-top:1px solid var(--line)}
+  .body{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .legend{display:none}
+  .toolhint{white-space:normal;text-align:center;max-width:calc(100% - 100px)}
+}
+</style>
+
+<div id="app">
+  <div id="map">
+    <svg id="svg" aria-label="SAU campus map"></svg>
+    <div class="mapctl">
+      <div class="ctl">
+        <button id="zin" aria-label="Zoom in">+</button>
+        <button id="zout" aria-label="Zoom out">&minus;</button>
+      </div>
+      <div class="ctl">
+        <button id="fit" aria-label="Fit campus" title="Fit campus"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        <button id="layersbtn" aria-label="Map layers" title="Layers"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 13 10 5 10-5"/></svg></button>
+      </div>
+    </div>
+    <div class="layers" id="layers" hidden>
+      <p class="eyebrow">Map layers</p>
+      <label class="chk"><input type="checkbox" id="lyTraffic" checked> Crowd hotspots</label>
+      <label class="chk"><input type="checkbox" id="lySteep" checked> Steep segments &amp; stairs</label>
+      <label class="chk"><input type="checkbox" id="lyLabels" checked> Building labels</label>
+      <label class="chk"><input type="checkbox" id="lyExplored" checked> Nodes expanded by search</label>
+    </div>
+    <div class="legend" aria-hidden="true">
+      <span><i style="background:var(--walk)"></i>walk</span>
+      <span><i style="background:var(--bike)"></i>2-wheeler</span>
+      <span><i style="background:var(--car)"></i>car</span>
+      <span><i style="background:var(--road);outline:1.5px solid var(--roadcase)"></i>road</span>
+      <span><i style="background:var(--lane)"></i>lane (walk + 2W)</span>
+      <span><i style="background:var(--steep)"></i>steep</span>
+      <span><i style="background:var(--closed)"></i>closed</span>
+    </div>
+    <div class="toolhint" id="toolhint" hidden></div>
+    <div id="popup" hidden></div>
+    <div class="toast" id="toast" hidden></div>
+  </div>
+
+  <aside id="panel">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="var(--accent)"/><path d="M8 21c3-1 4-5 7-6s5 1 7-1" stroke="var(--accent-ink)" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="8" cy="21" r="2.4" fill="var(--accent-ink)"/><circle cx="22" cy="14" r="2.4" fill="var(--accent-ink)"/></svg>
+      <div><h1>SAU Campus Navigator</h1><p>South Asian University · surveyed campus graph</p></div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="dir" aria-selected="true">Directions</button>
+      <button class="tab" role="tab" data-tab="cmp" aria-selected="false">Algorithms</button>
+      <button class="tab" role="tab" data-tab="tour" aria-selected="false">Multi-stop</button>
+      <button class="tab" role="tab" data-tab="trip" aria-selected="false">Closures</button>
+    </div>
+    <div class="body">
+
+      <!-- DIRECTIONS -->
+      <section id="sec-dir" style="display:flex;flex-direction:column;gap:14px">
+        <div class="od">
+          <span class="pin s"></span><select id="from" aria-label="Start"></select>
+          <button class="iconbtn" id="swap" aria-label="Swap start and destination" title="Swap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg></button>
+          <span class="rail"></span>
+          <span class="pin e"></span><select id="to" aria-label="Destination"></select>
+        </div>
+        <div class="modes" role="group" aria-label="Travel mode">
+          <button class="mode" data-veh="walk" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="13" cy="4" r="2"/><path d="m9 21 2-6 3 3v3M7 12l3-4 3 1 2 3h3M11 15l1-5"/></svg>Walk</button>
+          <button class="mode" data-veh="bike" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5.5" cy="17" r="3"/><circle cx="18.5" cy="17" r="3"/><path d="M8.5 17h5l3-7h-4M16.5 10 15 6h-2"/></svg>2-wheeler</button>
+          <button class="mode" data-veh="car" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 16V11l2-5h10l2 5v5M3 16h18M5 11h14"/><circle cx="7.5" cy="16.5" r="1.8"/><circle cx="16.5" cy="16.5" r="1.8"/></svg>Car</button>
+        </div>
+        <div class="grid2">
+          <label class="f">Leave at<input type="time" id="depart" value="09:55"></label>
+          <label class="f">Arrive by (optional)<input type="time" id="arrive" value="10:03"></label>
+          <label class="f">I am a<select id="role"><option value="student">Student</option><option value="faculty">Faculty</option><option value="resident">Hostel resident</option><option value="visitor">Visitor</option></select></label>
+          <label class="f">Search algorithm<select id="alg">
+            <option value="astar">A* (straight-line h)</option><option value="alt">A* + landmarks (ALT)</option>
+            <option value="wastar">Weighted A* (w = 2)</option><option value="ucs">UCS / Dijkstra</option>
+            <option value="greedy">Greedy best-first</option><option value="bfs">BFS</option>
+            <option value="dfs">DFS</option><option value="iddfs">IDDFS</option></select></label>
+        </div>
+        <div class="row" style="gap:16px">
+          <label class="chk"><input type="checkbox" id="wc"> Wheelchair</label>
+          <label class="chk"><input type="checkbox" id="avoid"> Avoid walking on roads</label>
+        </div>
+        <div id="dirOut" style="display:flex;flex-direction:column;gap:14px"></div>
+      </section>
+
+      <!-- ALGORITHMS -->
+      <section id="sec-cmp" hidden style="display:flex;flex-direction:column;gap:12px">
+        <p class="note">Every algorithm solves the query from the Directions tab (<b id="cmpQuery"></b>) on the same state space: (location, travel mode). Cost is expected minutes. Tap a row to see what it explored.</p>
+        <div class="tablewrap"><table id="cmpTable"></table></div>
+        <div class="box small" id="cmpNote"></div>
+        <p class="eyebrow">Average over all 351 place pairs (on foot)</p>
+        <div id="cmpAvg"><button class="btn ghost sm" id="runAvg">Run 351 × 5 searches</button></div>
+      </section>
+
+      <!-- MULTI-STOP -->
+      <section id="sec-tour" hidden style="display:flex;flex-direction:column;gap:12px">
+        <div class="grid2">
+          <label class="f">Start at<select id="tStart"></select></label>
+          <label class="f">Leave at<input type="time" id="tDepart" value="09:00"></label>
+        </div>
+        <div>
+          <p class="eyebrow" style="margin-bottom:6px">Stops <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">· opens · deadline · minutes there</span></p>
+          <div id="stops" style="display:flex;flex-direction:column;gap:8px"></div>
+          <button class="btn ghost sm" id="addStop" style="margin-top:8px">+ Add stop</button>
+        </div>
+        <div>
+          <p class="eyebrow" style="margin-bottom:6px">Order rules</p>
+          <div id="precs" style="display:flex;flex-direction:column;gap:6px"></div>
+          <button class="btn ghost sm" id="addPrec" style="margin-top:8px">+ Visit A before B</button>
+        </div>
+        <div class="grid2">
+          <label class="f">Finish at<select id="tEnd"></select></label>
+          <label class="f">Finish by<input type="time" id="tEndBy" value="10:10"></label>
+        </div>
+        <div class="row">
+          <button class="btn" id="solveTour">Plan visiting order</button>
+          <button class="btn ghost" id="tooTight">Try an impossible deadline</button>
+        </div>
+        <div id="tourOut" style="display:flex;flex-direction:column;gap:12px"></div>
+      </section>
+
+      <!-- CLOSURES & LIVE TRIP -->
+      <section id="sec-trip" hidden style="display:flex;flex-direction:column;gap:12px">
+        <p class="note">Pick a tool, then click any path on the map. Known closures are avoided when planning. A surprise closure is real but unknown to the agent until it reaches it, so the agent has to replan on the way.</p>
+        <div class="seg" role="group" aria-label="Closure tool">
+          <button data-tool="none" aria-pressed="true">Pan</button>
+          <button data-tool="all" aria-pressed="false">Close for all</button>
+          <button data-tool="car" aria-pressed="false">Close for cars</button>
+          <button data-tool="surprise" aria-pressed="false">Surprise</button>
+        </div>
+        <div class="clist" id="clist"></div>
+        <div class="row">
+          <button class="btn ghost sm" id="autoSurprise">Add a surprise closure on my route</button>
+          <button class="btn ghost sm" id="clearC">Reopen everything</button>
+        </div>
+        <div class="box" style="display:flex;flex-direction:column;gap:10px">
+          <p class="eyebrow">Live trip</p>
+          <p class="note" id="tripQuery"></p>
+          <div class="row"><button class="btn" id="startTrip">Start trip</button><button class="btn ghost sm" id="stopTrip" disabled>Stop</button></div>
+          <ol class="log" id="tripLog"></ol>
+        </div>
+      </section>
+    </div>
+  </aside>
+</div>
+
+<script>
+"use strict";
+const D = {"nodes":[[0,28.4839681,77.1985089,"lane",""],[1,28.4841177,77.1986311,"lane",""],[2,28.4840329,77.1987635,"lane",""],[3,28.484384,77.1982593,"lane",""],[4,28.4845556,77.19799,"lane",""],[5,28.4849749,77.1974396,"lane",""],[6,28.485109,77.1972736,"lane",""],[7,28.4857107,77.1971284,"lane",""],[8,28.4859356,77.1971082,"lane",""],[9,28.4860934,77.1971665,"lane",""],[10,28.4866876,77.1974374,"lane",""],[11,28.4871737,77.197667,"lane",""],[12,28.4872927,77.1977367,"lane",""],[13,28.4873658,77.1981042,"lane",""],[14,28.4875554,77.1979448,"lane",""],[15,28.4876081,77.1976791,"lane",""],[16,28.487267,77.1984286,"lane",""],[17,28.4871108,77.1988443,"lane",""],[18,28.4869089,77.1989485,"lane",""],[19,28.4863355,77.1989054,"lane",""],[20,28.4860699,77.1988921,"lane",""],[21,28.4857282,77.1990008,"lane",""],[22,28.4855289,77.1993198,"lane",""],[23,28.4853691,77.199514,"lane",""],[24,28.4851845,77.1997943,"lane",""],[25,28.4849955,77.2001147,"lane",""],[26,28.4851359,77.2002204,"lane",""],[27,28.4848504,77.2006421,"lane",""],[28,28.4846462,77.2005857,"lane",""],[29,28.4847661,77.2007505,"lane",""],[30,28.4849439,77.2008894,"lane",""],[31,28.484843,77.2010644,"lane",""],[32,28.4849802,77.2008432,"lane",""],[33,28.4841604,77.2001421,"lane",""],[34,28.4845394,77.2007452,"lane",""],[35,28.4846871,77.200895,"lane",""],[36,28.4842613,77.2014728,"lane",""],[37,28.4841123,77.201356,"lane",""],[38,28.4840385,77.2014859,"lane",""],[39,28.4836954,77.2019773,"lane",""],[40,28.4847673,77.2021177,"lane",""],[41,28.4843586,77.2026947,"lane",""],[42,28.4840552,77.2031293,"lane",""],[43,28.4835556,77.2028776,"lane",""],[44,28.4831949,77.2026717,"lane",""],[45,28.4827335,77.2024851,"lane",""],[46,28.4823518,77.2023076,"lane",""],[47,28.4819763,77.2020996,"lane",""],[48,28.4815617,77.2018274,"lane",""],[49,28.4816772,77.2019018,"lane",""],[50,28.4818155,77.2015848,"lane",""],[51,28.4821705,77.2010818,"lane",""],[52,28.4823425,77.2008841,"lane",""],[53,28.4825352,77.2008532,"lane",""],[54,28.4830241,77.2002209,"lane",""],[55,28.4837502,77.2004237,"lane",""],[56,28.4834208,77.2008843,"lane",""],[57,28.483068,77.2013789,"lane",""],[58,28.4829797,77.201515,"lane",""],[59,28.4836259,77.2020738,"lane",""],[60,28.4832799,77.2017746,"lane",""],[61,28.4830533,77.2020641,"lane",""],[62,28.4827784,77.2025032,"lane",""],[63,28.4825792,77.2020021,"lane",""],[64,28.4828203,77.2016564,"lane",""],[65,28.4825444,77.2013906,"lane",""],[66,28.4823011,77.2016732,"lane",""],[67,28.4839501,77.2004344,"lane",""],[68,28.4842829,77.1999415,"lane",""],[69,28.4845244,77.1995607,"lane",""],[70,28.4846655,77.199326,"lane",""],[71,28.4850429,77.2000343,"lane",""],[72,28.4847699,77.1991901,"lane",""],[73,28.4849473,77.1989315,"lane",""],[74,28.4850495,77.1987942,"lane",""],[75,28.4852075,77.1985634,"lane",""],[76,28.4853166,77.1984136,"lane",""],[77,28.4855143,77.1981581,"lane",""],[78,28.4858154,77.1980551,"lane",""],[79,28.4861093,77.1981615,"lane",""],[80,28.4859576,77.1981076,"lane",""],[81,28.4860248,77.1979202,"lane",""],[82,28.4857084,77.1979059,"lane",""],[83,28.4857294,77.1980845,"lane",""],[84,28.4854436,77.1982494,"lane",""],[85,28.4853006,77.1981273,"lane",""],[86,28.4854245,77.1979581,"lane",""],[87,28.485276,77.1976009,"lane",""],[88,28.4848252,77.1982201,"lane",""],[89,28.4864643,77.1981053,"lane",""],[90,28.4865107,77.1979528,"lane",""],[91,28.4846927,77.1992906,"lane",""],[92,28.4845667,77.1991952,"lane",""],[93,28.4847665,77.1988968,"lane",""],[94,28.4849124,77.1987054,"lane",""],[95,28.4851648,77.1983385,"lane",""],[96,28.4846974,77.1988436,"lane",""],[97,28.4865997,77.1979075,"lane",""],[98,28.4850938,77.1992766,"lane",""],[99,28.4843763,77.1982525,"lane",""],[100,28.4836259,77.2020738,"lane",""],[101,28.4827784,77.2025032,"lane",""],[102,28.4850429,77.2000343,"lane",""],[103,28.4846927,77.1992906,"lane",""],[104,28.4832026,77.2026995,"road",""],[105,28.4835006,77.2022065,"road",""],[106,28.4837069,77.2019507,"road",""],[107,28.4840549,77.2014883,"road",""],[108,28.484138,77.2013867,"road",""],[109,28.4846338,77.200623,"road",""],[110,28.4850147,77.2000514,"road",""],[111,28.4853659,77.1995428,"road",""],[112,28.485781,77.1989833,"road",""],[113,28.4860921,77.1989221,"road",""],[114,28.4869819,77.1989455,"road",""],[115,28.4872209,77.1986596,"road",""],[116,28.4872827,77.1983878,"road",""],[117,28.4874482,77.1980174,"road",""],[118,28.4873071,77.197855,"road",""],[119,28.4872337,77.1976906,"road",""],[120,28.4867633,77.1974608,"road",""],[121,28.4861503,77.1971835,"road",""],[122,28.4859467,77.1971142,"road",""],[123,28.4858203,77.1971226,"road",""],[124,28.4856806,77.1971428,"road",""],[125,28.4853848,77.1972037,"road",""],[126,28.4851321,77.1972815,"road",""],[127,28.4850637,77.1972984,"road",""],[128,28.4850102,77.1973762,"road",""],[129,28.4847768,77.1976993,"road",""],[130,28.4845725,77.198003,"road",""],[131,28.4843866,77.1982745,"road",""],[132,28.4841916,77.1985434,"road",""],[133,28.4841021,77.1986635,"road",""],[134,28.4839873,77.1985199,"road",""],[135,28.4838059,77.202039,"road",""],[136,28.4866051,77.1979157,"road",""],[137,28.4846583,77.2005861,"road",""],[138,28.4843324,77.2002999,"road",""],[139,28.4872749,77.1984218,"road",""],[140,28.4870465,77.198297,"road",""],[141,28.4823559,77.2023191,"road",""],[142,28.4835652,77.2028894,"road",""],[143,28.4840709,77.20315,"road",""],[144,28.4847638,77.2021215,"road",""],[145,28.4848251,77.1982387,"road",""],[146,28.4875506,77.197625,"road",""],[147,28.4843149,77.2015601,"road",""],[148,28.4853783,77.1995261,"road",""],[149,28.4850921,77.1992883,"road",""],[150,28.4834771,77.2021372,"road",""],[151,28.4852857,77.1976348,"road",""],[152,28.4815536,77.2018292,"road",""],[153,28.4827593,77.2017621,"road",""],[154,28.4827467,77.2017412,"road",""],[155,28.4846583,77.2005861,"road",""],[156,28.4841227,77.1986359,"road",""],[157,28.4849687,77.1974338,"road",""],[158,28.4851115,77.1972866,"road",""],[159,28.4857119,77.1971383,"road",""],[160,28.4860939,77.1971643,"road",""],[161,28.4866909,77.197428,"road",""],[162,28.4871756,77.1976622,"road",""],[163,28.4872622,77.1977543,"road",""],[164,28.4874005,77.1981242,"road",""],[165,28.487273,77.1984304,"road",""],[166,28.4870876,77.1988191,"road",""],[167,28.486909,77.1989436,"road",""],[168,28.4863351,77.1989285,"road",""],[169,28.4857515,77.1990232,"road",""],[170,28.4855303,77.1993212,"road",""],[171,28.4851893,77.1997986,"road",""],[172,28.4849809,77.2001021,"road",""],[173,28.4845491,77.2007534,"road",""],[174,28.4842462,77.2014927,"road",""],[175,28.48369,77.2019717,"road",""],[176,28.4843706,77.2027052,"road",""],[177,28.4840511,77.2031398,"road",""],[178,28.4827324,77.2024882,"road",""],[179,28.4819808,77.20209,"road",""],[180,28.4816762,77.201904,"road",""],[181,28.483616,77.2020635,"road",""],[182,28.4827767,77.2025081,"road",""],[183,28.4825829,77.2020056,"road",""],[184,28.4850328,77.2000252,"road",""],[185,28.4852653,77.1976157,"road",""],[186,28.4835183,77.202223,"lane",""],[187,28.4837113,77.2019546,"lane",""],[188,28.4841424,77.2013795,"lane",""],[189,28.4846259,77.2006161,"lane",""],[190,28.4850272,77.200061,"lane",""],[191,28.4853558,77.1995342,"lane",""],[192,28.4857812,77.198984,"lane",""],[193,28.4860932,77.1988932,"lane",""],[194,28.4869705,77.1989167,"lane",""],[195,28.4871865,77.1986429,"lane",""],[196,28.4872797,77.1983866,"lane",""],[197,28.4874556,77.1980288,"lane",""],[198,28.4873158,77.1978528,"lane",""],[199,28.4872295,77.1976997,"lane",""],[200,28.4867594,77.1974713,"lane",""],[201,28.4861476,77.1971912,"lane",""],[202,28.48582,77.1971185,"lane",""],[203,28.4856794,77.1971359,"lane",""],[204,28.4853854,77.1972069,"lane",""],[205,28.4851297,77.1972686,"lane",""],[206,28.4850774,77.1973127,"lane",""],[207,28.4850189,77.1973852,"lane",""],[208,28.484777,77.1976994,"lane",""],[209,28.4845719,77.1980039,"lane",""],[210,28.4841849,77.1985373,"lane",""],[211,28.4840987,77.1986608,"lane",""],[212,28.4839854,77.198523,"lane",""],[213,28.4843327,77.2002995,"lane",""],[214,28.4870347,77.198335,"lane",""],[215,28.4827515,77.201755,"lane",""],[216,28.4861164,77.1973211,"entrance","AB 4 Entrance"],[217,28.4848645,77.1977769,"entrance","AB2 Entrance"],[218,28.4834391,77.2008749,"entrance","Ground Entrance 3"],[219,28.4840562,77.2013051,"entrance","Ground Entrance"],[220,28.485818,77.1981177,"entrance","Amphitheatre Entrance1"],[221,28.4858337,77.1980617,"lane",""],[222,28.4851057,77.1987898,"entrance","AB 6 Entrance2"],[223,28.4850726,77.1987604,"lane",""],[224,28.4875533,77.1976332,"gate","Gate No.3"],[225,28.4846396,77.1995284,"entrance","AB7 Entrance"],[226,28.4845743,77.1994776,"lane",""],[227,28.4865823,77.1979169,"entrance","UG Parking2 Exit"],[228,28.4875854,77.1978505,"entrance","Utility Building Entrance"],[229,28.4875747,77.1978478,"lane",""],[230,28.4856331,77.1994263,"entrance","Central Kitchen Entrance"],[231,28.4847903,77.1992362,"entrance","Mess3 Entrance"],[232,28.4852671,77.1987739,"entrance","AB6 Entrance"],[233,28.4851403,77.1986616,"lane",""],[234,28.4815316,77.2018168,"gate","Gate No.1"],[235,28.4849925,77.2008464,"entrance","AB8 Entrance"],[236,28.4871288,77.1977731,"entrance","AB5 Entrace"],[237,28.4863474,77.1988395,"entrance","Conventional Centre Entrance"],[238,28.4831038,77.2013877,"entrance","Ground Entrance 2"],[239,28.483216,77.2019108,"entrance","Girl's Hostel Entrance"],[240,28.4831922,77.2018867,"lane",""],[241,28.4829378,77.2014604,"entrance","Basketball Court Entrance"],[242,28.4847875,77.1981846,"entrance","UG Parking1 Entrane"],[243,28.4847861,77.1981867,"lane",""],[244,28.4857116,77.1972725,"entrance","AB3 Entrance2"],[245,28.4844117,77.2019287,"entrance","Faculty Residence Entrance"],[246,28.4844622,77.2018533,"lane",""],[247,28.4844701,77.1983421,"entrance","AB1 Entrance"],[248,28.4855397,77.1982102,"entrance","Amphitheatre Entrance 2"],[249,28.4839478,77.200457,"entrance","Ground Entrance 4"],[250,28.48547,77.1978581,"entrance","AB3 Entrane"],[251,28.4854827,77.1979474,"lane",""],[252,28.4835855,77.202814,"entrance","Guest House Entrance"],[253,28.4852588,77.198067,"entrance","AB2 Entrance2"],[254,28.4866228,77.1980036,"entrance","AB5 Entrance2"],[255,28.4839783,77.1985047,"gate","Gate No.2"],[256,28.4823073,77.2018601,"entrance","Health Centre Entrance"],[257,28.4822225,77.2017764,"lane",""],[258,28.4853066,77.1976728,"entrance","UG Parking2 Entrance"],[259,28.4844033,77.2003367,"entrance","Administrative Block Entrance"],[260,28.4843925,77.2003527,"road",""],[261,28.4863991,77.1979982,"entrance","AB 4 Entrance2"],[262,28.4863763,77.1980683,"lane",""],[263,28.4827791,77.2024088,"entrance","Girls' Hostel Entrance2"],[264,28.4828179,77.2024402,"lane",""],[265,28.4847163,77.1987685,"entrance","AB1 Entrance 2"],[266,28.4847511,77.200381,"entrance","Administrative Block Entrance 2"],[267,28.484779,77.2004051,"road",""],[268,28.4824945,77.2014899,"entrance","Boys' Hotel Entrance"],[269,28.4824764,77.2014697,"lane",""],[270,28.4840381,77.2024054,"entrance","Faculty Residence Entrance2"],[271,28.4848219,77.2011053,"entrance","Central Library Entrance"],[272,28.4820317,77.2020136,"entrance","Boys' Hostel Entrance2"],[273,28.4820375,77.2020193,"lane",""],[274,28.4847717,77.1998379,"parking","Admin UG Parking"],[275,28.4847937,77.1998067,"lane",""],[276,28.4850794,77.1992687,"parking","UG Parking 4"],[277,28.4870574,77.1982963,"parking","UG Parking 3"],[278,28.484804,77.198201,"parking","UG Parking 1"],[279,28.4847962,77.1982118,"road",""],[280,28.4848036,77.1982016,"lane",""],[281,28.4827442,77.2017407,"parking","Boys' Hostel Parking"],[282,28.4866091,77.1979163,"parking","UG Parking2 Exit"],[283,28.4834822,77.2021283,"parking","Girl's Hostel UG Parking"],[284,28.4835446,77.2021865,"lane",""],[285,28.4843255,77.2015489,"parking","Library UG Parking"],[286,28.4837963,77.2020443,"parking","Faculty Parking"],[287,28.4852984,77.1976614,"parking","UG Parking 2 Entry"]],"edges":[[3,3,4,32.51,"lane",["bike","walk"],0.0388,0],[8,8,9,18.45,"lane",["bike","walk"],0.0168,0],[18,18,19,63.9,"lane",["bike","walk"],0.0224,0],[21,21,22,38.25,"lane",["bike","walk"],0.0714,0],[22,22,23,25.99,"lane",["bike","walk"],0.0304,0],[25,25,26,18.71,"lane",["bike","walk"],0.0096,0],[26,26,27,52.02,"lane",["bike","walk"],0.0309,0],[27,25,28,60.24,"lane",["bike","walk"],0.0262,0],[28,28,29,20.91,"lane",["bike","walk"],0.0129,0],[29,29,27,14.14,"lane",["bike","walk"],0.0339,0],[30,29,30,23.98,"lane",["bike","walk"],0.0192,0],[31,30,31,20.45,"lane",["bike","walk"],0.0763,0],[32,30,32,6.06,"lane",["bike","walk"],0.036,0],[35,34,35,22.0,"lane",["bike","walk"],0.0155,0],[36,35,31,23.97,"lane",["bike","walk"],0.0421,0],[37,35,36,73.69,"lane",["bike","walk"],0.0246,0],[39,37,34,76.28,"lane",["bike","walk"],0.0195,0],[40,37,38,15.12,"lane",["bike","walk"],0.0079,0],[43,40,41,72.42,"lane",["bike","walk"],0.0307,0],[44,41,42,54.24,"lane",["bike","walk"],0.0619,0],[45,42,43,60.77,"lane",["bike","walk"],0.0451,0],[46,43,44,44.87,"lane",["bike","walk"],0.0479,0],[49,45,46,45.85,"lane",["bike","walk"],0.0064,0],[50,46,47,46.44,"lane",["bike","walk"],0.0031,0],[51,47,48,53.22,"lane",["bike","walk"],0.0018,0],[52,48,49,14.76,"lane",["bike","walk"],0.0016,0],[53,49,50,34.59,"lane",["bike","walk"],0.0002,0],[54,50,51,63.04,"lane",["bike","walk"],0.0002,0],[55,51,52,27.19,"lane",["bike","walk"],0.0001,0],[56,52,53,21.64,"lane",["bike","walk"],0.0006,0],[57,53,54,82.3,"lane",["bike","walk"],0.0004,0],[58,54,55,83.14,"lane",["bike","walk"],0.0012,0],[59,55,56,58.04,"lane",["bike","walk"],0.0005,0],[60,56,57,62.26,"lane",["bike","walk"],0.0031,0],[61,57,58,16.53,"lane",["bike","walk"],0.0025,0],[62,58,59,90.26,"lane",["bike","walk"],0.0085,0],[63,58,60,41.93,"lane",["bike","walk"],0.0064,0],[66,62,46,51.15,"lane",["bike","walk"],0.0068,0],[67,46,63,39.13,"lane",["bike","walk"],0.0013,0],[69,64,58,22.48,"lane",["bike","walk"],0.0004,0],[70,64,65,40.19,"lane",["bike","walk"],0.0034,0],[71,65,51,51.39,"lane",["bike","walk"],0.0018,0],[74,55,67,22.25,"lane",["bike","walk"],0.0006,0],[75,67,33,36.92,"lane",["bike","walk"],0.0371,0],[76,33,68,23.88,"lane",["bike","walk"],0.0424,0],[77,68,69,45.89,"lane",["bike","walk"],0.0029,0],[81,72,73,32.06,"lane",["bike","walk"],0.0011,0],[82,73,74,17.58,"lane",["bike","walk"],0.0108,0],[84,75,76,19.01,"lane",["bike","walk"],0.0245,0],[85,76,77,33.27,"lane",["bike","walk"],0.0256,0],[86,77,78,34.96,"lane",["bike","walk"],0.0122,0],[88,79,80,17.67,"lane",["bike","walk"],0.0062,0],[89,80,81,19.77,"lane",["bike","walk"],0.017,0],[90,81,82,35.21,"lane",["bike","walk"],0.0032,0],[91,82,83,17.61,"lane",["bike","walk"],0.0215,0],[92,83,77,24.98,"lane",["bike","walk"],0.0123,0],[93,77,84,11.89,"lane",["bike","walk"],0.025,0],[94,84,85,19.88,"lane",["bike","walk"],0.0144,0],[95,85,86,21.53,"lane",["bike","walk"],0.0254,0],[97,86,5,71.18,"lane",["bike","walk"],0.0293,0],[98,5,87,37.01,"lane",["bike","walk"],0.0233,0],[101,89,10,69.84,"lane",["bike","walk"],0.0451,0],[102,10,90,54.07,"lane",["bike","walk"],0.0547,0],[103,90,89,15.78,"lane",["bike","walk"],0.012,0],[106,2,91,89.65,"lane",["bike","walk"],0.0056,0],[107,91,92,16.83,"lane",["bike","walk"],0.0003,0],[108,92,93,36.65,"lane",["bike","walk"],0.0005,0],[109,93,94,24.76,"lane",["bike","walk"],0.0108,0],[110,94,74,17.54,"lane",["bike","walk"],0.0087,0],[111,94,95,45.53,"lane",["bike","walk"],0.0217,0],[112,95,85,25.58,"lane",["bike","walk"],0.0282,0],[113,93,96,9.28,"lane",["bike","walk"],0.0038,0],[114,10,97,46.98,"lane",["bike","walk"],0.0605,0],[115,23,98,38.42,"lane",["bike","walk"],0.0971,0],[116,4,99,32.49,"lane",["bike","walk"],0.0236,0],[117,99,1,46.86,"lane",["bike","walk"],0.0236,0],[118,3,99,1.08,"lane",["bike","walk"],0.0494,0],[120,100,39,12.2,"lane",["bike","walk"],0.0099,0],[121,59,100,0.0,"lane",["bike","walk"],0.0003,0],[122,44,101,49.15,"lane",["bike","walk"],0.0243,0],[123,101,45,5.31,"lane",["bike","walk"],0.0058,0],[124,62,101,0.0,"lane",["bike","walk"],0.0,0],[125,24,102,28.25,"lane",["bike","walk"],0.0936,0],[127,71,102,0.0,"lane",["bike","walk"],0.0034,0],[128,70,103,4.6,"lane",["bike","walk"],0.0043,0],[129,103,72,13.04,"lane",["bike","walk"],0.0076,0],[130,91,103,0.0,"lane",["bike","walk"],0.0,0],[131,104,105,58.48,"road",["bike","car","walk"],0.0,0],[133,106,107,59.49,"road",["bike","car","walk"],0.0,0],[134,107,108,13.57,"road",["bike","car","walk"],0.0,0],[139,112,113,35.11,"road",["bike","car","walk"],0.0,0],[144,117,118,22.32,"road",["bike","car","walk"],0.0,0],[149,122,123,14.07,"road",["bike","car","walk"],0.0,0],[151,124,125,33.43,"road",["bike","car","walk"],0.0,0],[152,125,126,29.11,"road",["bike","car","walk"],0.0,0],[154,127,128,9.66,"road",["bike","car","walk"],0.0,0],[156,129,130,37.38,"road",["bike","car","walk"],0.0,0],[157,130,131,33.64,"road",["bike","car","walk"],0.0,0],[158,131,132,34.08,"road",["bike","car","walk"],0.0,0],[160,133,134,18.97,"road",["bike","car","walk"],0.0,0],[161,106,135,13.99,"road",["bike","car","walk"],0.0,0],[162,120,136,47.81,"road",["bike","car","walk"],0.0,0],[164,139,140,28.18,"road",["bike","car","walk"],0.0,0],[166,104,142,44.39,"road",["bike","car","walk"],0.0,0],[170,117,146,40.01,"road",["bike","car","walk"],0.0,0],[172,148,149,39.41,"road",["bike","car","walk"],0.0,0],[173,105,150,7.26,"road",["bike","car","walk"],0.0,0],[177,153,154,2.47,"road",["bike","car","walk"],0.0,0],[178,111,148,2.14,"road",["bike","car","walk"],0.0,0],[179,116,139,3.44,"road",["bike","car","walk"],0.0,0],[180,109,155,4.52,"road",["bike","car","walk"],0.0,0],[182,137,155,0.0,"road",["bike","car","walk"],0.0,0],[183,0,134,2.39,"connector",["bike","walk"],0.0,0],[184,132,156,11.85,"road",["bike","car","walk"],0.0,0],[185,156,133,3.54,"road",["bike","car","walk"],0.0,0],[186,1,156,0.72,"connector",["bike","walk"],0.0,0],[187,3,131,1.52,"connector",["bike","walk"],0.0,0],[188,4,130,2.27,"connector",["bike","walk"],0.0,0],[189,128,157,7.28,"road",["bike","car","walk"],0.0,0],[190,157,129,33.59,"road",["bike","car","walk"],0.0,0],[191,5,157,0.9,"connector",["bike","walk"],0.0,0],[192,126,158,2.34,"road",["bike","car","walk"],0.0,0],[193,158,127,5.44,"road",["bike","car","walk"],0.0,0],[194,6,158,1.3,"connector",["bike","walk"],0.0,0],[195,123,159,12.16,"road",["bike","car","walk"],0.0,0],[196,159,124,3.5,"road",["bike","car","walk"],0.0,0],[197,7,159,0.98,"connector",["bike","walk"],0.0,0],[198,8,122,1.36,"connector",["bike","walk"],0.0,0],[199,121,160,6.54,"road",["bike","car","walk"],0.0,0],[200,160,122,17.1,"road",["bike","car","walk"],0.0,0],[201,9,160,0.22,"connector",["bike","walk"],0.0,0],[202,120,161,8.67,"road",["bike","car","walk"],0.0,0],[203,161,121,64.68,"road",["bike","car","walk"],0.0,0],[204,10,161,0.98,"connector",["bike","walk"],0.0,0],[205,119,162,7.03,"road",["bike","car","walk"],0.0,0],[206,162,120,49.89,"road",["bike","car","walk"],0.0,0],[207,11,162,0.52,"connector",["bike","walk"],0.0,0],[208,118,163,11.04,"road",["bike","car","walk"],0.0,0],[209,163,119,6.99,"road",["bike","car","walk"],0.0,0],[210,12,163,3.81,"connector",["bike","walk"],0.0,0],[211,116,164,28.9,"road",["bike","car","walk"],0.0,0],[212,164,117,11.71,"road",["bike","car","walk"],0.0,0],[213,13,164,4.32,"connector",["bike","walk"],0.0,0],[214,115,165,23.14,"road",["bike","car","walk"],0.0,0],[215,165,116,4.3,"road",["bike","car","walk"],0.0,0],[216,16,165,0.69,"connector",["bike","walk"],0.0,0],[217,114,166,17.04,"road",["bike","car","walk"],0.0,0],[218,166,115,21.51,"road",["bike","car","walk"],0.0,0],[219,17,166,3.56,"connector",["bike","walk"],0.0,0],[221,167,114,8.11,"road",["bike","car","walk"],0.0,0],[222,18,167,0.48,"connector",["bike","walk"],0.0,0],[223,113,168,27.02,"road",["bike","car","walk"],0.0,0],[224,168,167,63.84,"road",["bike","car","walk"],0.0,0],[225,19,168,2.26,"connector",["bike","walk"],0.0,0],[226,20,113,3.84,"connector",["bike","walk"],0.0,0],[228,169,112,5.1,"road",["bike","car","walk"],0.0,0],[229,21,169,3.38,"connector",["bike","walk"],0.0,0],[230,111,170,28.34,"road",["bike","car","walk"],0.0,0],[231,170,169,38.12,"road",["bike","car","walk"],0.0,0],[232,22,170,0.21,"connector",["bike","walk"],0.0,0],[233,23,148,1.56,"connector",["bike","walk"],0.0,0],[235,171,111,31.79,"road",["bike","car","walk"],0.0,0],[236,24,171,0.68,"connector",["bike","walk"],0.0,0],[238,172,110,6.21,"road",["bike","car","walk"],0.0,0],[239,25,172,2.04,"connector",["bike","walk"],0.0,0],[240,28,137,1.35,"connector",["bike","walk"],0.0,0],[241,108,173,76.95,"road",["bike","car","walk"],0.0,0],[242,173,109,15.84,"road",["bike","car","walk"],0.0,0],[243,34,173,1.34,"connector",["bike","walk"],0.0,0],[244,108,174,15.87,"road",["bike","car","walk"],0.0,0],[245,174,147,10.09,"road",["bike","car","walk"],0.0,0],[246,36,174,2.57,"connector",["bike","walk"],0.0,0],[247,37,108,4.14,"connector",["bike","walk"],0.0,0],[248,38,107,1.84,"connector",["bike","walk"],0.0,0],[250,175,106,2.78,"road",["bike","car","walk"],0.0,0],[251,39,175,0.82,"connector",["bike","walk"],0.0,0],[252,40,144,0.54,"connector",["bike","walk"],0.0,0],[253,143,176,54.78,"road",["bike","car","walk"],0.0,0],[254,176,144,71.87,"road",["bike","car","walk"],0.0,0],[255,41,176,1.68,"connector",["bike","walk"],0.0,0],[256,142,177,59.31,"road",["bike","car","walk"],0.0,0],[257,177,143,2.42,"road",["bike","car","walk"],0.0,0],[258,42,177,1.12,"connector",["bike","walk"],0.0,0],[259,43,142,1.58,"connector",["bike","walk"],0.0,0],[260,44,104,2.85,"connector",["bike","walk"],0.0,0],[261,141,178,45.01,"road",["bike","car","walk"],0.0,0],[263,45,178,0.33,"connector",["bike","walk"],0.0,0],[264,46,141,1.22,"connector",["bike","walk"],0.0,0],[266,179,141,47.34,"road",["bike","car","walk"],0.0,0],[267,47,179,1.06,"connector",["bike","walk"],0.0,0],[268,48,152,0.91,"connector",["bike","walk"],0.0,0],[269,152,180,15.47,"road",["bike","car","walk"],0.0,0],[270,180,179,38.44,"road",["bike","car","walk"],0.0,0],[271,49,180,0.25,"connector",["bike","walk"],0.0,0],[272,105,181,18.97,"road",["bike","car","walk"],0.0,0],[273,181,175,12.18,"road",["bike","car","walk"],0.0,0],[274,59,181,1.49,"connector",["bike","walk"],0.0,0],[275,178,182,5.3,"road",["bike","car","walk"],0.0,0],[276,182,104,50.91,"road",["bike","car","walk"],0.0,0],[277,62,182,0.52,"connector",["bike","walk"],0.0,0],[278,141,183,39.7,"road",["bike","car","walk"],0.0,0],[279,183,153,30.83,"road",["bike","car","walk"],0.0,0],[280,63,183,0.53,"connector",["bike","walk"],0.0,0],[281,110,184,3.26,"road",["bike","car","walk"],0.0,0],[282,184,171,28.17,"road",["bike","car","walk"],0.0,0],[283,71,184,1.44,"connector",["bike","walk"],0.0,0],[284,128,185,36.77,"road",["bike","car","walk"],0.0,0],[285,185,151,2.93,"road",["bike","car","walk"],0.0,0],[286,87,185,1.87,"connector",["bike","walk"],0.0,0],[287,88,145,1.81,"connector",["bike","walk"],0.0,0],[288,97,136,0.99,"connector",["bike","walk"],0.0,0],[289,98,149,1.15,"connector",["bike","walk"],0.0,0],[290,99,131,2.44,"connector",["bike","walk"],0.0,0],[291,100,181,1.49,"connector",["bike","walk"],0.0,0],[292,101,182,0.52,"connector",["bike","walk"],0.0,0],[293,102,184,1.44,"connector",["bike","walk"],0.0,0],[294,44,186,56.72,"lane",["bike","walk"],0.0099,0],[296,105,186,2.55,"connector",["bike","walk"],0.0,0],[297,38,187,58.51,"lane",["bike","walk"],0.0114,0],[298,187,39,2.83,"lane",["bike","walk"],0.0032,0],[299,106,187,0.61,"connector",["bike","walk"],0.0,0],[300,36,188,16.06,"lane",["bike","walk"],0.0328,0],[301,188,37,4.05,"lane",["bike","walk"],0.0133,0],[302,108,188,0.85,"connector",["bike","walk"],0.0,0],[303,28,189,3.73,"lane",["bike","walk"],0.0179,0],[304,189,34,15.86,"lane",["bike","walk"],0.048,0],[305,109,189,1.11,"connector",["bike","walk"],0.0,0],[306,102,190,3.14,"lane",["bike","walk"],0.0294,0],[307,190,25,6.32,"lane",["bike","walk"],0.0592,0],[308,110,190,1.68,"connector",["bike","walk"],0.0,0],[309,23,191,2.47,"lane",["bike","walk"],0.022,0],[310,191,24,31.77,"lane",["bike","walk"],0.0891,0],[311,111,191,1.4,"connector",["bike","walk"],0.0,0],[312,20,192,33.33,"lane",["bike","walk"],0.1856,0],[313,192,21,6.12,"lane",["bike","walk"],0.1135,0],[314,112,192,0.07,"connector",["bike","walk"],0.0,0],[315,19,193,26.97,"lane",["bike","walk"],0.0034,0],[316,193,20,2.6,"lane",["bike","walk"],0.0009,0],[317,113,193,2.82,"connector",["bike","walk"],0.0,0],[318,17,194,17.14,"lane",["bike","walk"],0.0353,0],[319,194,18,7.51,"lane",["bike","walk"],0.0265,0],[320,114,194,3.09,"connector",["bike","walk"],0.0,0],[321,16,195,22.78,"lane",["bike","walk"],0.0939,0],[322,195,17,21.4,"lane",["bike","walk"],0.0939,0],[323,115,195,4.16,"connector",["bike","walk"],0.0,0],[324,13,196,29.22,"lane",["bike","walk"],0.0244,0],[325,196,16,4.34,"lane",["bike","walk"],0.0106,0],[326,116,196,0.34,"connector",["bike","walk"],0.0,0],[327,13,197,12.41,"lane",["bike","walk"],0.0015,0],[328,197,14,13.81,"lane",["bike","walk"],0.0015,0],[329,117,197,1.37,"connector",["bike","walk"],0.0,0],[330,12,198,11.64,"lane",["bike","walk"],0.0,0],[331,198,13,25.19,"lane",["bike","walk"],0.0,0],[332,118,198,0.99,"connector",["bike","walk"],0.0,0],[333,11,199,6.98,"lane",["bike","walk"],0.0291,0],[334,199,12,7.9,"lane",["bike","walk"],0.0329,0],[335,119,199,1.01,"connector",["bike","walk"],0.0,0],[336,10,200,8.65,"lane",["bike","walk"],0.0563,0],[337,200,11,49.88,"lane",["bike","walk"],0.0651,0],[338,120,200,1.11,"connector",["bike","walk"],0.0,0],[339,9,201,6.49,"lane",["bike","walk"],0.0256,0],[340,201,10,64.69,"lane",["bike","walk"],0.0395,0],[341,121,201,0.81,"connector",["bike","walk"],0.0,0],[342,7,202,12.19,"lane",["bike","walk"],0.0004,0],[343,202,8,12.89,"lane",["bike","walk"],0.0004,0],[344,123,202,0.4,"connector",["bike","walk"],0.0,0],[346,203,7,3.57,"lane",["bike","walk"],0.0079,0],[347,124,203,0.69,"connector",["bike","walk"],0.0,0],[349,204,203,33.41,"lane",["bike","walk"],0.0222,0],[350,125,204,0.32,"connector",["bike","walk"],0.0,0],[351,6,205,2.35,"lane",["bike","walk"],0.0052,0],[352,205,204,29.07,"lane",["bike","walk"],0.0222,0],[353,126,205,1.29,"connector",["bike","walk"],0.0,0],[355,206,6,5.2,"lane",["bike","walk"],0.0123,0],[356,127,206,2.07,"connector",["bike","walk"],0.0,0],[357,5,207,7.22,"lane",["bike","walk"],0.017,0],[358,207,206,9.62,"lane",["bike","walk"],0.0227,0],[359,128,207,1.3,"connector",["bike","walk"],0.0,0],[360,4,208,37.59,"lane",["bike","walk"],0.0624,0],[361,208,5,33.6,"lane",["bike","walk"],0.0624,0],[362,129,208,0.02,"connector",["bike","walk"],0.0,0],[363,4,209,2.27,"lane",["bike","walk"],0.0015,0],[365,130,209,0.11,"connector",["bike","walk"],0.0,0],[366,1,210,11.83,"lane",["bike","walk"],0.013,0],[367,210,3,35.05,"lane",["bike","walk"],0.013,0],[368,132,210,0.96,"connector",["bike","walk"],0.0,0],[369,1,211,3.59,"lane",["bike","walk"],0.0266,0],[370,211,2,12.43,"lane",["bike","walk"],0.0743,0],[371,133,211,0.46,"connector",["bike","walk"],0.0,0],[372,0,212,2.37,"lane",["bike","walk"],0.0097,0],[373,212,1,18.11,"lane",["bike","walk"],0.041,0],[374,134,212,0.37,"connector",["bike","walk"],0.0,0],[375,28,213,44.7,"lane",["bike","walk"],0.0533,0],[376,213,33,24.57,"lane",["bike","walk"],0.0533,0],[377,138,213,0.05,"connector",["bike","walk"],0.0,0],[378,139,16,1.11,"connector",["bike","walk"],0.0,0],[379,89,214,67.28,"lane",["bike","walk"],0.0005,0],[380,214,16,27.4,"lane",["bike","walk"],0.0181,0],[381,140,214,3.95,"connector",["bike","walk"],0.0,0],[382,143,42,2.67,"connector",["bike","walk"],0.0,0],[383,151,87,3.48,"connector",["bike","walk"],0.0,0],[384,63,215,30.82,"lane",["bike","walk"],0.0001,0],[385,215,64,12.31,"lane",["bike","walk"],0.0008,0],[386,153,215,1.11,"connector",["bike","walk"],0.0,0],[387,154,215,1.45,"connector",["bike","walk"],0.0,0],[388,155,28,1.35,"connector",["bike","walk"],0.0,0],[389,216,201,13.16,"entrance",["walk"],0.0,0],[390,217,208,12.33,"entrance",["walk"],0.0,0],[391,218,56,2.24,"entrance",["walk"],0.0,0],[392,219,37,7.98,"entrance",["walk"],0.0,0],[393,78,221,2.13,"lane",["bike","walk"],0.0009,0],[394,221,79,32.16,"lane",["bike","walk"],0.0042,0],[395,220,221,5.74,"entrance",["walk"],0.0,0],[396,74,223,4.19,"lane",["bike","walk"],0.0081,0],[398,222,223,4.66,"entrance",["walk"],0.0,0],[399,224,15,7.56,"gate",["bike","walk"],0.0,0],[400,224,146,0.86,"gate",["bike","car","walk"],0.0,0],[401,69,226,9.83,"lane",["bike","walk"],0.0111,0],[402,226,70,17.95,"lane",["bike","walk"],0.0113,0],[403,225,226,8.79,"entrance",["walk"],0.0,0],[404,227,97,2.14,"entrance",["walk"],0.0,0],[405,14,229,9.72,"lane",["bike","walk"],0.0332,0],[406,229,15,16.9,"lane",["bike","walk"],0.0342,0],[407,228,229,1.22,"entrance",["walk"],0.0,0],[408,230,170,15.37,"entrance",["walk"],0.0,0],[409,231,72,5.04,"entrance",["walk"],0.0,0],[410,223,233,12.25,"lane",["bike","walk"],0.0194,0],[411,233,75,12.16,"lane",["bike","walk"],0.0194,0],[412,232,233,17.87,"entrance",["walk"],0.0,0],[413,234,48,3.51,"gate",["bike","walk"],0.0,0],[414,234,152,2.74,"gate",["bike","car","walk"],0.0,0],[415,235,32,1.4,"entrance",["walk"],0.0,0],[416,236,11,11.5,"entrance",["walk"],0.0,0],[417,237,19,6.57,"entrance",["walk"],0.0,0],[418,238,57,4.07,"entrance",["walk"],0.0,0],[419,60,240,14.66,"lane",["bike","walk"],0.0008,0],[420,240,61,23.22,"lane",["bike","walk"],0.0008,0],[421,239,240,3.55,"entrance",["walk"],0.0,0],[422,241,58,7.08,"entrance",["walk"],0.0,0],[423,209,243,29.77,"lane",["bike","walk"],0.02,0],[425,242,243,0.26,"entrance",["walk"],0.0,0],[426,244,159,13.12,"entrance",["walk"],0.0,0],[427,38,246,59.24,"lane",["bike","walk"],0.0222,0],[428,246,40,42.65,"lane",["bike","walk"],0.0222,0],[429,245,246,9.26,"entrance",["walk"],0.0,0],[430,247,131,11.39,"entrance",["walk"],0.0,0],[431,248,77,5.83,"entrance",["walk"],0.0,1],[432,249,67,2.22,"entrance",["walk"],0.0,0],[433,86,251,6.56,"lane",["bike","walk"],0.003,0],[434,251,82,25.42,"lane",["bike","walk"],0.0047,0],[435,250,251,8.83,"entrance",["walk"],0.0,0],[436,252,43,7.05,"entrance",["walk"],0.0,0],[437,253,85,7.51,"entrance",["walk"],0.0,0],[438,254,136,8.82,"entrance",["walk"],0.0,0],[439,255,0,1.2,"gate",["bike","walk"],0.0,0],[440,255,134,1.79,"gate",["bike","car","walk"],0.0,0],[441,66,257,13.35,"lane",["bike","walk"],0.0007,0],[443,256,257,12.48,"entrance",["walk"],0.0,0],[444,258,151,4.39,"entrance",["walk"],0.0,0],[445,137,260,37.34,"road",["bike","car","walk"],0.0,0],[446,260,138,8.44,"road",["bike","car","walk"],0.0,0],[447,259,260,1.97,"entrance",["walk"],0.0,0],[448,81,262,41.67,"lane",["bike","walk"],0.0035,0],[449,262,89,10.44,"lane",["bike","walk"],0.0035,0],[450,261,262,7.3,"entrance",["walk"],0.0,0],[451,61,264,45.13,"lane",["bike","walk"],0.0005,0],[452,264,62,7.56,"lane",["bike","walk"],0.0004,0],[453,263,264,5.29,"entrance",["walk"],0.0,0],[454,265,96,7.63,"entrance",["walk"],0.0,0],[455,155,267,22.21,"road",["bike","car","walk"],0.0,0],[456,267,172,37.16,"road",["bike","car","walk"],0.0,0],[457,266,267,3.89,"entrance",["walk"],0.0,0],[458,65,269,10.81,"lane",["bike","walk"],0.0,0],[459,269,66,27.85,"lane",["bike","walk"],0.0,0],[460,268,269,2.82,"entrance",["walk"],0.0,0],[461,270,135,44.14,"entrance",["walk"],0.0,0],[462,271,31,4.63,"entrance",["walk"],0.0,0],[463,257,273,31.41,"lane",["bike","walk"],0.0007,0],[464,273,47,10.39,"lane",["bike","walk"],0.0007,0],[465,272,273,0.85,"entrance",["walk"],0.0,0],[466,274,110,34.14,"parking",["bike","car","walk"],0.0,0],[467,69,275,38.4,"lane",["bike","walk"],0.0051,0],[468,275,71,35.54,"lane",["bike","walk"],0.0051,0],[469,274,275,3.91,"parking",["bike","walk"],0.0,0],[470,276,149,2.38,"parking",["bike","car","walk"],0.0,0],[471,276,98,1.78,"parking",["bike","walk"],0.0,0],[472,277,140,1.21,"parking",["bike","car","walk"],0.0,0],[473,277,214,4.55,"parking",["bike","walk"],0.0,0],[474,130,279,32.18,"road",["bike","car","walk"],0.0,0],[475,279,145,4.15,"road",["bike","car","walk"],0.0,0],[476,278,279,1.36,"parking",["bike","car","walk"],0.0,0],[477,243,280,2.43,"lane",["bike","walk"],0.0049,0],[478,280,88,3.01,"lane",["bike","walk"],0.006,0],[479,278,280,0.07,"parking",["bike","walk"],0.0,0],[480,281,154,0.28,"parking",["bike","car","walk"],0.0,0],[481,281,215,1.61,"parking",["bike","walk"],0.0,0],[482,282,136,0.45,"parking",["bike","car","walk"],0.0,0],[483,282,97,1.35,"parking",["bike","walk"],0.0,0],[484,283,150,1.04,"parking",["bike","car","walk"],0.0,0],[485,186,284,4.61,"lane",["bike","walk"],0.0046,0],[486,284,100,14.24,"lane",["bike","walk"],0.0099,0],[487,283,284,8.97,"parking",["bike","walk"],0.0,0],[488,285,147,1.61,"parking",["bike","car","walk"],0.0,0],[489,285,36,10.31,"parking",["bike","walk"],0.0,0],[490,286,135,1.19,"parking",["bike","car","walk"],0.0,0],[491,286,187,12.89,"parking",["bike","walk"],0.0,0],[492,287,151,2.96,"parking",["bike","car","walk"],0.0,0],[493,287,87,6.41,"parking",["bike","walk"],0.0,0]],"places":{"AB1":{"label":"Academic Block 1","nodes":[247,265]},"AB2":{"label":"Academic Block 2","nodes":[217,253]},"AB3":{"label":"Academic Block 3","nodes":[250,244]},"AB4":{"label":"Academic Block 4","nodes":[216,261]},"AB5":{"label":"Academic Block 5","nodes":[236,254]},"AB6":{"label":"Academic Block 6","nodes":[232,222]},"AB7":{"label":"Academic Block 7","nodes":[225]},"AB8":{"label":"Academic Block 8","nodes":[235]},"ADMIN":{"label":"Administrative Block","nodes":[259,266]},"LIBRARY":{"label":"Central Library","nodes":[271]},"CONVENTION":{"label":"Convention Centre","nodes":[237]},"AMPHITHEATRE":{"label":"Amphitheatre","nodes":[220,248]},"KITCHEN":{"label":"Central Kitchen","nodes":[230]},"MESS3":{"label":"Mess 3","nodes":[231]},"UTILITY":{"label":"Utility Building","nodes":[228]},"GROUND":{"label":"Sports Ground","nodes":[219,238,218,249]},"BASKETBALL":{"label":"Basketball Court","nodes":[241]},"HEALTH":{"label":"Health Centre","nodes":[256]},"GIRLS_HOSTEL":{"label":"Girls' Hostel","nodes":[239,263]},"BOYS_HOSTEL":{"label":"Boys' Hostel","nodes":[268,272]},"FACULTY_RES":{"label":"Faculty Residence","nodes":[245,270]},"GUEST_HOUSE":{"label":"Guest House","nodes":[252]},"UG_PARKING1":{"label":"UG Parking 1 (foot)","nodes":[242]},"UG_PARKING2":{"label":"UG Parking 2 (foot)","nodes":[258,227]},"GATE1":{"label":"Gate No. 1","nodes":[234]},"GATE2":{"label":"Gate No. 2","nodes":[255]},"GATE3":{"label":"Gate No. 3","nodes":[224]}},"parking":{"Admin UG Parking":274,"UG Parking 4":276,"UG Parking 3":277,"UG Parking 1":278,"Boys' Hostel Parking":281,"UG Parking2 Exit":282,"Girl's Hostel UG Parking":283,"Library UG Parking":285,"Faculty Parking":286,"UG Parking 2 Entry":287},"speeds":{"walk":1.3,"wheelchair":0.9,"bike":4.2,"car":5.6},"park_time":{"bike":60,"car":180},"rules":{"Faculty Parking":["faculty"],"Girl's Hostel UG Parking":["resident","faculty"],"Boys' Hostel Parking":["resident","faculty"]},"zones":[{"name":"Mess & Central Kitchen at lunch","lat":28.4852,"lon":77.1993,"radius_m":70,"windows":[["12:45","14:00"],["19:30","21:00"]],"factor":1.6,"cv":0.45},{"name":"Academic blocks at class change","lat":28.4856,"lon":77.198,"radius_m":110,"windows":[["08:50","09:10"],["09:50","10:10"],["10:50","11:10"],["11:50","12:10"],["13:50","14:10"],["14:50","15:10"],["15:50","16:10"]],"factor":1.4,"cv":0.35},{"name":"Main gate rush","lat":28.4816,"lon":77.2019,"radius_m":60,"windows":[["08:30","09:15"],["17:00","18:00"]],"factor":1.8,"cv":0.5}],"base_cv":{"walk":0.1,"bike":0.2,"car":0.25}};
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+
+/* ------------------------------------------------------------------ graph */
+const R = 6371008.8, rad = x => x * Math.PI / 180;
+const LAT0 = 28.4850, LON0 = 77.2000, MLAT = Math.PI * R / 180, MLON = MLAT * Math.cos(rad(LAT0));
+const N = {}, E = {}, ADJ = {};
+for (const [id, lat, lon, kind, name] of D.nodes) { N[id] = {id, lat, lon, kind, name, x: (lon - LON0) * MLON, y: -(lat - LAT0) * MLAT}; ADJ[id] = []; }
+for (const [id, u, v, len, layer, modes, grade, stairs] of D.edges) { E[id] = {id, u, v, len, layer, modes: new Set(modes), grade, stairs: !!stairs}; ADJ[u].push(id); ADJ[v].push(id); }
+const other = (e, n) => e.u === n ? e.v : e.u;
+function hav(a, b) { const dp = rad(b.lat - a.lat), dl = rad(b.lon - a.lon); const h = Math.sin(dp/2)**2 + Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dl/2)**2; return 2*R*Math.asin(Math.sqrt(h)); }
+const PLACES = D.places, PARK = D.parking, S = D.speeds, PT = D.park_time, RULES = D.rules;
+const PARK_NAME = Object.fromEntries(Object.entries(PARK).map(([k, v]) => [v, k]));
+const ENT_PLACE = {}; for (const [k, p] of Object.entries(PLACES)) for (const n of p.nodes) ENT_PLACE[n] = k;
+const toMin = s => { if (!s) return Infinity; const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+const fmt = m => { if (!isFinite(m)) return '--:--'; const r = Math.round(m); return String(Math.floor(r / 60) % 24).padStart(2, '0') + ':' + String(r % 60).padStart(2, '0'); };
+const fmtDur = s => s < 60 ? `${Math.round(s)} s` : `${(s / 60).toFixed(1)} min`;
+const fmtM = m => m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${Math.round(m)} m`;
+function resolve(v) { return v.startsWith('P:') ? [PARK[v.slice(2)]] : PLACES[v].nodes.slice(); }
+function placeLabel(v) { return v.startsWith('P:') ? v.slice(2) : PLACES[v].label; }
+
+/* --------------------------------------------- congestion / uncertainty model */
+const ZONES = D.zones.map(z => ({...z, x: (z.lon - LON0) * MLON, y: -(z.lat - LAT0) * MLAT}));
+for (const e of Object.values(E)) {
+  const a = N[e.u], b = N[e.v], mid = {lat: (a.lat + b.lat) / 2, lon: (a.lon + b.lon) / 2};
+  e.zones = ZONES.filter(z => hav(mid, z) <= z.radius_m);
+}
+const zoneActive = (z, t) => z.windows.some(([a, b]) => toMin(a) <= t && t <= toMin(b));
+function edgeTime(e, mode, speed, t) {
+  if (mode === 'fetch') mode = 'walk';
+  let f = 1, cv = D.base_cv[mode] ?? 0.15;
+  for (const z of e.zones) if (zoneActive(z, t)) { f = Math.max(f, z.factor); cv = Math.max(cv, z.cv); }
+  const mean = e.len / speed * f; return [mean, cv * mean];
+}
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function lognorm(r, mean, std) {
+  if (mean <= 0) return 0; const s2 = Math.log(1 + (std / mean) ** 2);
+  const z = Math.sqrt(-2 * Math.log(1 - r())) * Math.cos(2 * Math.PI * r());
+  return Math.exp(Math.log(mean) - s2 / 2 + Math.sqrt(s2) * z);
+}
+
+/* ---------------------------------------------------- search problem */
+// state key "node|mode", mode in fetch | walk | bike | car
+const sk = (n, m) => n + '|' + m;
+const sn = s => +s.slice(0, s.indexOf('|'));
+const sm = s => s.slice(s.indexOf('|') + 1);
+
+function makeProblem(c) {
+  // c: {starts, goals, veh, role, wc, avoid, metric, depart, riskK, known(Map eid->Set modes), alt, init?}
+  const goals = new Set(c.goals), goalNodes = c.goals.map(i => N[i]);
+  const speed = m => { if (m === 'fetch') m = 'walk'; return (m === 'walk' && c.wc) ? S.wheelchair : S[m]; };
+  const canPark = name => { const r = RULES[name]; return !r || r.includes(c.role); };
+  let vehicleNode = null, init;
+  if (c.veh === 'walk' || c.starts.every(s => N[s].kind === 'gate' || N[s].kind === 'parking')) init = c.starts.map(s => sk(s, c.veh));
+  else { vehicleNode = locateVehicle(c.starts, c.veh); init = c.starts.map(s => sk(s, 'fetch')); }
+  if (c.init) init = c.init;
+  const blocked = (eid, m) => { const b = c.known && c.known.get(eid); return !!(b && b.has(m)); };
+  const allowed = (e, mode) => { const m = mode === 'fetch' ? 'walk' : mode;
+    if (!e.modes.has(m) || blocked(e.id, m)) return false;
+    if (m === 'walk' && c.wc && (e.stairs || e.grade > 0.0833)) return false; return true; };
+  const cost = (e, mode) => {
+    if (c.metric === 'distance') return e.len;
+    const m = mode === 'fetch' ? 'walk' : mode;
+    let [mean, std] = edgeTime(e, m, speed(m), c.depart);
+    if (m === 'walk') { if (e.layer === 'road') mean *= c.avoid; if (c.wc && e.grade > 0.05) mean *= 1 + 4 * (e.grade - 0.05); }
+    return c.metric === 'safe' ? mean + c.riskK * std : mean;
+  };
+  const hc = new Map();
+  const straight = n => { if (!hc.has(n)) hc.set(n, Math.min(...goalNodes.map(g => hav(N[n], g)))); return hc.get(n); };
+  let h = s => { const n = sn(s), m = sm(s), d = straight(n);
+    if (c.metric === 'distance') return d;
+    if (m === 'fetch') return d / Math.max(speed('walk'), S[c.veh]);
+    return d / speed(m); };
+  if (c.alt && c.veh === 'walk') { const base = h, lc = new Map();
+    h = s => { const n = sn(s); if (!lc.has(n)) { let lb = LANDMARKS.bound(n, c.goals); if (c.metric !== 'distance') lb /= speed('walk'); lc.set(n, Math.max(base(s), lb)); } return lc.get(n); }; }
+  return {
+    c, init, vehicleNode, speed, cost, allowed, h,
+    goal: s => { const m = sm(s); return (m === 'walk' || m === 'fetch') && goals.has(sn(s)); },
+    succ(s) {
+      const n = sn(s), m = sm(s), out = [];
+      for (const eid of ADJ[n]) { const e = E[eid]; if (allowed(e, m)) out.push([sk(other(e, n), m), cost(e, m), ['move', eid]]); }
+      if (m === 'fetch' && n === vehicleNode) out.push([sk(n, c.veh), c.metric === 'distance' ? 0 : PT[c.veh], ['unpark', PARK_NAME[n]]]);
+      if ((m === 'car' || m === 'bike') && N[n].kind === 'parking' && canPark(PARK_NAME[n])) out.push([sk(n, 'walk'), c.metric === 'distance' ? 0 : PT[m], ['park', PARK_NAME[n]]]);
+      return out;
+    }
+  };
+}
+function locateVehicle(starts, veh) {
+  const dist = new Map(starts.map(s => [s, 0])), pq = new Heap(); let t = 0;
+  starts.forEach(s => pq.push([0, t++, s]));
+  while (pq.size) { const [d, , n] = pq.pop(); if (d > dist.get(n)) continue;
+    if (N[n].kind === 'parking' && ADJ[n].some(eid => E[eid].modes.has(veh))) return n;
+    for (const eid of ADJ[n]) { const e = E[eid], m = other(e, n);
+      if (e.modes.has('walk') && d + e.len < (dist.get(m) ?? Infinity)) { dist.set(m, d + e.len); pq.push([d + e.len, t++, m]); } } }
+  return null;
+}
+
+/* ------------------------------------------------------------ algorithms */
+class Heap { constructor() { this.a = []; } get size() { return this.a.length; }
+  lt(i, j) { const x = this.a[i], y = this.a[j]; return x[0] < y[0] || (x[0] === y[0] && x[1] < y[1]); }
+  push(v) { const a = this.a; a.push(v); let i = a.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (!this.lt(i, p)) break; [a[i], a[p]] = [a[p], a[i]]; i = p; } }
+  pop() { const a = this.a, top = a[0], last = a.pop(); if (a.length) { a[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < a.length && this.lt(l, m)) m = l; if (r < a.length && this.lt(r, m)) m = r; if (m === i) break; [a[i], a[m]] = [a[m], a[i]]; i = m; } } return top; } }
+
+function finish(name, parent, goal, st, t0, explored) {
+  const r = {alg: name, found: goal != null, expanded: st.expanded, generated: st.generated, maxFrontier: st.maxF, explored, ms: performance.now() - t0, states: [], actions: [], steps: [], cost: Infinity};
+  if (goal != null) { let s = goal; const S_ = [s], A = [], C = [];
+    while (parent.get(s)) { const [p, a, c] = parent.get(s); A.push(a); C.push(c); S_.push(p); s = p; }
+    r.states = S_.reverse(); r.actions = A.reverse(); r.steps = C.reverse(); r.cost = r.steps.reduce((x, y) => x + y, 0); }
+  return r;
+}
+function bfs(P) {
+  const t0 = performance.now(), st = {expanded: 0, generated: 0, maxF: 0}, parent = new Map(), explored = [];
+  P.init.forEach(s => parent.set(s, null));
+  for (const s of P.init) if (P.goal(s)) return finish('BFS', parent, s, st, t0, explored);
+  const q = [...P.init]; let qi = 0;
+  while (qi < q.length) { const s = q[qi++]; st.expanded++; explored.push(sn(s));
+    for (const [t, c, a] of P.succ(s)) { st.generated++;
+      if (!parent.has(t)) { parent.set(t, [s, a, c]); if (P.goal(t)) return finish('BFS', parent, t, st, t0, explored); q.push(t); } }
+    st.maxF = Math.max(st.maxF, q.length - qi); }
+  return finish('BFS', parent, null, st, t0, explored);
+}
+function dfs(P) {
+  const t0 = performance.now(), st = {expanded: 0, generated: 0, maxF: 0}, parent = new Map(), explored = [], visited = new Set();
+  P.init.forEach(s => parent.set(s, null)); const stack = [...P.init];
+  while (stack.length) { const s = stack.pop(); if (visited.has(s)) continue; visited.add(s); st.expanded++; explored.push(sn(s));
+    if (P.goal(s)) return finish('DFS', parent, s, st, t0, explored);
+    for (const [t, c, a] of P.succ(s)) { st.generated++; if (!visited.has(t)) { parent.set(t, [s, a, c]); stack.push(t); } }
+    st.maxF = Math.max(st.maxF, stack.length); }
+  return finish('DFS', parent, null, st, t0, explored);
+}
+function iddfs(P, maxDepth = 500) {
+  const t0 = performance.now(), st = {expanded: 0, generated: 0, maxF: 0}, explored = [];
+  for (let limit = 0; limit <= maxDepth; limit++) {
+    const best = new Map(); let cutoff = false;
+    for (const s0 of P.init) { const stack = [[s0, 0, [null, s0, null, 0]]];
+      while (stack.length) { const [s, d, link] = stack.pop();
+        if ((best.get(s) ?? 1e9) <= d) continue; best.set(s, d); st.expanded++; explored.push(sn(s));
+        if (P.goal(s)) { const parent = new Map(); let node = link;
+          while (node) { const [prev, stt, a, c] = node; parent.set(stt, prev ? [prev[1], a, c] : null); node = prev; }
+          const r = finish('IDDFS', parent, s, st, t0, explored); r.depth = limit; return r; }
+        if (d === limit) { cutoff = true; continue; }
+        for (const [t, c, a] of P.succ(s)) { st.generated++; if ((best.get(t) ?? 1e9) > d + 1) stack.push([t, d + 1, [link, t, a, c]]); }
+        st.maxF = Math.max(st.maxF, stack.length); } }
+    if (!cutoff) break;
+  }
+  return finish('IDDFS', new Map(), null, st, t0, explored);
+}
+function bestFirst(P, name, prio, reopen = true) {
+  const t0 = performance.now(), st = {expanded: 0, generated: 0, maxF: 0}, g = new Map(), parent = new Map(), closed = new Set(), explored = [], pq = new Heap();
+  let tie = 0;
+  for (const s of P.init) { g.set(s, 0); parent.set(s, null); pq.push([prio(0, P.h(s)), tie++, 0, s]); }
+  while (pq.size) { const [, , gv, s] = pq.pop();
+    if (gv > g.get(s) + 1e-9) continue; if (closed.has(s) && !reopen) continue;
+    if (P.goal(s)) return finish(name, parent, s, st, t0, explored);
+    closed.add(s); st.expanded++; explored.push(sn(s));
+    for (const [t, c, a] of P.succ(s)) { st.generated++; const g2 = gv + c;
+      if (g2 + 1e-9 < (g.get(t) ?? Infinity)) { if (closed.has(t) && !reopen) continue;
+        g.set(t, g2); parent.set(t, [s, a, c]); closed.delete(t); pq.push([prio(g2, P.h(t)), tie++, g2, t]); } }
+    st.maxF = Math.max(st.maxF, pq.size); }
+  return finish(name, parent, null, st, t0, explored);
+}
+const ucs = P => bestFirst(P, 'UCS', g => g);
+const greedy = P => bestFirst(P, 'Greedy', (g, h) => h, false);
+const astar = (P, w = 1) => bestFirst(P, w === 1 ? (P.c.alt && P.c.veh === 'walk' ? 'A* + ALT' : 'A*') : `Weighted A* (w=${w})`, (g, h) => g + w * h);
+function runAlg(alg, P) {
+  switch (alg) { case 'bfs': return bfs(P); case 'dfs': return dfs(P); case 'iddfs': return iddfs(P);
+    case 'ucs': return ucs(P); case 'greedy': return greedy(P); case 'wastar': return astar(P, 2); default: return astar(P); }
+}
+
+// Landmarks (ALT): exact walking distances from 6 far-apart nodes
+const LANDMARKS = (() => {
+  function dij(src) { const dist = new Map([[src, 0]]), pq = new Heap(); let t = 0; pq.push([0, t++, src]);
+    while (pq.size) { const [d, , n] = pq.pop(); if (d > dist.get(n)) continue;
+      for (const eid of ADJ[n]) { const e = E[eid], m = other(e, n); if (e.modes.has('walk') && d + e.len < (dist.get(m) ?? Infinity)) { dist.set(m, d + e.len); pq.push([d + e.len, t++, m]); } } }
+    return dist; }
+  const ids = Object.keys(N).map(Number); let far = dij(ids[0]); const L = [], dists = [];
+  for (let i = 0; i < 6; i++) { let cur = null, best = -1; for (const [n, d] of far) if (d > best) { best = d; cur = n; }
+    const d = dij(cur); L.push(cur); dists.push(d);
+    if (i === 0) far = d; else { const nf = new Map(); for (const [n, v] of far) nf.set(n, Math.min(v, d.get(n) ?? Infinity)); far = nf; } }
+  return { nodes: L, bound(n, goals) { let best = 0; for (const d of dists) { const dn = d.get(n); if (dn == null) continue;
+    let lb = Infinity; for (const t of goals) { const dt = d.get(t); if (dt != null) lb = Math.min(lb, Math.abs(dt - dn)); } if (isFinite(lb)) best = Math.max(best, lb); } return best; } };
+})();
+
+/* ------------------------------------------------------------ route helpers */
+function timeProblem(c) { return makeProblem({...c, metric: 'time'}); }
+function analyse(r, c) {
+  const TP = timeProblem(c), legs = []; let cur = null, dist = 0, time = 0;
+  r.actions.forEach((a, i) => {
+    const mode = sm(r.states[i + 1]);
+    if (a[0] !== 'move') { const t = PT[c.veh]; legs.push({kind: a[0], name: a[1], time: t}); time += t; cur = null; return; }
+    const e = E[a[1]], t = TP.cost(e, mode); dist += e.len; time += t;
+    if (!cur || cur.mode !== mode) { cur = {kind: 'move', mode, dist: 0, time: 0, road: 0, lane: 0, eids: []}; legs.push(cur); }
+    cur.dist += e.len; cur.time += t; cur.eids.push(e.id); if (e.layer === 'road') cur.road += e.len; if (e.layer === 'lane') cur.lane += e.len;
+    cur.end = sn(r.states[i + 1]);
+  });
+  return {legs, dist, time};
+}
+function mcLegs(r, c) {
+  const P = makeProblem(c), out = [];
+  r.actions.forEach((a, i) => { if (a[0] !== 'move') { out.push([PT[c.veh], PT[c.veh] * 0.3]); return; }
+    const m = sm(r.states[i + 1]); out.push(edgeTime(E[a[1]], m, P.speed(m), c.depart)); });
+  return out;
+}
+function sample(legs, n = 4000, seed = 7) { const r = rng(seed), out = new Float64Array(n);
+  for (let k = 0; k < n; k++) { let s = 0; for (const [m, sd] of legs) s += lognorm(r, m, sd); out[k] = s; }
+  return out.sort(); }
+const routeSig = r => r.actions.filter(a => a[0] === 'move').map(a => a[1]).join(',');
+
+/* ------------------------------------------------------------- app state */
+const state = {
+  veh: 'walk', known: new Map(), surprise: new Set(), tool: 'none',
+  routes: [], sel: 0, cmp: null, cmpSel: null, tour: null,
+  view: {cx: 0, cy: 0, z: 1}, trip: null,
+};
+function cfg(over = {}) {
+  return Object.assign({
+    starts: resolve($('#from').value), goals: resolve($('#to').value), veh: state.veh, role: $('#role').value,
+    wc: $('#wc').checked, avoid: $('#avoid').checked ? 1.6 : 1, metric: 'time', depart: toMin($('#depart').value || '10:00'),
+    riskK: 1.5, known: state.known, alt: $('#alg').value === 'alt',
+  }, over);
+}
+
+/* ---------------------------------------------------------------- map */
+const NS = 'http://www.w3.org/2000/svg', svg = $('#svg');
+function el(tag, attrs = {}, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+const LAYER_IDS = ['zones', 'base', 'steep', 'closures', 'alts', 'route', 'hits', 'explored', 'markers', 'labels', 'over'];
+const L = {}; LAYER_IDS.forEach(id => L[id] = el('g', {id: 'L-' + id}, svg));
+const scaled = {}; LAYER_IDS.forEach(id => scaled[id] = []);
+function clear(id) { L[id].replaceChildren(); scaled[id] = []; }
+function pin(layer, x, y) { const g = el('g', {}, L[layer]); scaled[layer].push({g, x, y}); g.setAttribute('transform', `translate(${x} ${y}) scale(${1 / state.view.z})`); return g; }
+const path = pts => pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');
+const seg = e => `M${N[e.u].x.toFixed(1)} ${N[e.u].y.toFixed(1)}L${N[e.v].x.toFixed(1)} ${N[e.v].y.toFixed(1)}`;
+const nse = {'vector-effect': 'non-scaling-stroke'};
+
+function drawBase() {
+  clear('base');
+  const by = {road: '', lane: '', conn: '', link: ''};
+  for (const e of Object.values(E)) {
+    const k = e.layer === 'road' ? 'road' : e.layer === 'lane' ? 'lane' : e.layer === 'connector' ? 'conn' : 'link'; by[k] += seg(e); }
+  el('path', {d: by.link, class: 'e-link', ...nse}, L.base);
+  el('path', {d: by.road, class: 'e-roadcase', ...nse}, L.base);
+  el('path', {d: by.lane, class: 'e-lanecase', ...nse}, L.base);
+  el('path', {d: by.conn, class: 'e-conn', ...nse}, L.base);
+  el('path', {d: by.road, class: 'e-road', ...nse}, L.base);
+  el('path', {d: by.lane, class: 'e-lane', ...nse}, L.base);
+  clear('steep');
+  el('path', {d: Object.values(E).filter(e => e.grade > 0.0833 || e.stairs).map(seg).join(''), class: 'e-steep', ...nse}, L.steep);
+  clear('markers'); clear('labels');
+  for (const n of Object.values(N)) {
+    if (n.kind === 'entrance' || n.kind === 'gate') {
+      const g = pin('markers', n.x, n.y), key = ENT_PLACE[n.id];
+      if (n.kind === 'gate') { el('rect', {x: -6, y: -6, width: 12, height: 12, rx: 2, transform: 'rotate(45)', class: 'gate'}, g); }
+      else el('circle', {r: 4.2, class: 'ent'}, g);
+      el('circle', {r: 11, class: 'place-hit'}, g);
+      if (key) g.addEventListener('click', ev => { ev.stopPropagation(); if (!state.drag?.moved) openPopup(key, n); });
+    } else if (n.kind === 'parking') {
+      const g = pin('markers', n.x, n.y);
+      el('rect', {x: -7, y: -7, width: 14, height: 14, rx: 3.5, class: 'pk'}, g);
+      el('text', {x: 0, y: 3.3, 'text-anchor': 'middle', class: 'ptxt'}, g).textContent = 'P';
+      const t = el('title', {}, g); t.textContent = PARK_NAME[n.id];
+      el('circle', {r: 12, class: 'place-hit'}, g);
+      g.addEventListener('click', ev => { ev.stopPropagation(); if (!state.drag?.moved) openPopup('P:' + PARK_NAME[n.id], n); });
+    }
+  }
+  for (const [k, p] of Object.entries(PLACES)) {
+    if (!p.nodes.length) continue;
+    const x = p.nodes.reduce((s, i) => s + N[i].x, 0) / p.nodes.length, y = p.nodes.reduce((s, i) => s + N[i].y, 0) / p.nodes.length;
+    const g = pin('labels', x, y);
+    el('text', {x: 0, y: -10, 'text-anchor': 'middle', class: 'lbl'}, g).textContent = p.label.replace('Academic Block', 'AB').replace(' (foot)', '');
+  }
+}
+function drawZones() {
+  clear('zones'); if (!$('#lyTraffic').checked) return;
+  const t = toMin($('#depart').value || '10:00');
+  for (const z of ZONES) { const on = zoneActive(z, t);
+    el('circle', {cx: z.x, cy: z.y, r: z.radius_m, class: 'zone' + (on ? '' : ' off'), ...nse}, L.zones);
+    if (on) { const g = pin('zones', z.x, z.y + z.radius_m); el('text', {x: 0, y: 14, 'text-anchor': 'middle', class: 'lbl zl'}, g).textContent = z.name + ` · ×${z.factor}`; } }
+}
+function drawClosures() {
+  clear('closures');
+  for (const [eid, modes] of state.known) el('path', {d: seg(E[eid]), class: 'c-closed', ...nse, 'stroke-opacity': modes.has('walk') ? 1 : .55}, L.closures);
+  for (const eid of state.surprise) el('path', {d: seg(E[eid]), class: 'c-surprise', ...nse}, L.closures);
+  clear('hits');
+  if (state.tool !== 'none') for (const e of Object.values(E)) {
+    if (e.layer === 'entrance' || e.layer === 'parking' || e.layer === 'gate') continue;
+    const p = el('path', {d: seg(e), class: 'hit', ...nse}, L.hits);
+    p.addEventListener('click', ev => { ev.stopPropagation(); if (!state.drag?.moved) toggleClosure(e.id); });
+  }
+}
+const MODE_VAR = {walk: 'var(--walk)', fetch: 'var(--fetch)', bike: 'var(--bike)', car: 'var(--car)'};
+function routePolylines(r) {
+  const out = []; let cur = null;
+  r.actions.forEach((a, i) => { if (a[0] !== 'move') { cur = null; return; }
+    const m = sm(r.states[i + 1]), e = E[a[1]], from = sn(r.states[i]), to = sn(r.states[i + 1]);
+    if (!cur || cur.m !== m) { cur = {m, pts: [[N[from].x, N[from].y]]}; out.push(cur); }
+    cur.pts.push([N[to].x, N[to].y]); });
+  return out;
+}
+function drawRoute(r, opts = {}) {
+  if (!r || !r.found) return;
+  const polys = routePolylines(r);
+  for (const p of polys) el('path', {d: path(p.pts), class: 'r-case', ...nse}, L.route);
+  for (const p of polys) el('path', {d: path(p.pts), class: 'r-line', stroke: opts.color || MODE_VAR[p.m], ...nse, ...(p.m === 'fetch' ? {'stroke-dasharray': '2 9'} : {})}, L.route);
+  r.actions.forEach((a, i) => { if (a[0] === 'move') return; const n = N[sn(r.states[i])], g = pin('over', n.x, n.y);
+    el('rect', {x: -10, y: -10, width: 20, height: 20, rx: 6, fill: a[0] === 'park' ? MODE_VAR[state.veh] : 'var(--fetch)', stroke: 'var(--panel)', 'stroke-width': 2}, g);
+    el('text', {x: 0, y: 4, 'text-anchor': 'middle', class: 'ptxt', style: 'font-size:11px'}, g).textContent = 'P'; });
+  if (!opts.noEnds) { const s = N[sn(r.states[0])], t = N[sn(r.states[r.states.length - 1])];
+    const gs = pin('over', s.x, s.y); el('circle', {r: 7, fill: 'var(--panel)', stroke: 'var(--ink)', 'stroke-width': 3.5}, gs);
+    const gt = pin('over', t.x, t.y); el('path', {d: 'M0 0C-3-6-10-9-10-16a10 10 0 0 1 20 0c0 7-7 10-10 16Z', fill: 'var(--closed)', stroke: 'var(--panel)', 'stroke-width': 1.5}, gt); el('circle', {cx: 0, cy: -16, r: 3.6, fill: 'var(--panel)'}, gt); }
+}
+function drawExplored(r, upto) {
+  clear('explored'); if (!r || !$('#lyExplored').checked) return;
+  const seen = new Set(); const list = r.explored.slice(0, upto ?? r.explored.length);
+  for (const n of list) { if (seen.has(n)) continue; seen.add(n); const g = pin('explored', N[n].x, N[n].y); el('circle', {r: 3.2, class: 'exp'}, g); }
+}
+function clearRoutes() { clear('alts'); clear('route'); clear('over'); clear('explored'); }
+
+// view / pan / zoom
+function size() { const r = svg.getBoundingClientRect(); return [r.width || 1, r.height || 1]; }
+function applyView() {
+  const [w, h] = size(), v = state.view;
+  svg.setAttribute('viewBox', `${v.cx - w / 2 / v.z} ${v.cy - h / 2 / v.z} ${w / v.z} ${h / v.z}`);
+  const k = 1 / v.z;
+  for (const id of LAYER_IDS) for (const s of scaled[id]) s.g.setAttribute('transform', `translate(${s.x} ${s.y}) scale(${k})`);
+  L.labels.style.display = ($('#lyLabels').checked && v.z > 0.55) ? '' : 'none';
+  positionPopup();
+}
+function panelInset() { return window.innerWidth > 760 ? $('#panel').getBoundingClientRect().right + 8 : 0; }
+function fitTo(nodes, pad = 50) {
+  const xs = nodes.map(n => N[n].x), ys = nodes.map(n => N[n].y); if (!xs.length) return;
+  const [w, h] = size(), left = panelInset();
+  const minx = Math.min(...xs), maxx = Math.max(...xs), miny = Math.min(...ys), maxy = Math.max(...ys);
+  const z = Math.min((w - left - 2 * pad) / Math.max(maxx - minx, 40), (h - 2 * pad) / Math.max(maxy - miny, 40));
+  state.view.z = Math.max(0.3, Math.min(z, 6));
+  state.view.cx = (minx + maxx) / 2 - left / 2 / state.view.z; state.view.cy = (miny + maxy) / 2; applyView();
+}
+function zoomAt(f, px, py) { const [w, h] = size(), v = state.view;
+  const wx = v.cx + (px - w / 2) / v.z, wy = v.cy + (py - h / 2) / v.z;
+  v.z = Math.max(0.3, Math.min(v.z * f, 8)); v.cx = wx - (px - w / 2) / v.z; v.cy = wy - (py - h / 2) / v.z; applyView(); }
+const pointers = new Map();
+svg.addEventListener('pointerdown', e => { pointers.set(e.pointerId, [e.clientX, e.clientY]); state.drag = {x: e.clientX, y: e.clientY, moved: false, cx: state.view.cx, cy: state.view.cy};
+  if (pointers.size === 2) { const [a, b] = [...pointers.values()]; state.pinch = {d: Math.hypot(a[0] - b[0], a[1] - b[1]), z: state.view.z}; } });
+svg.addEventListener('pointermove', e => { if (!pointers.has(e.pointerId)) return; pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pointers.size === 2 && state.pinch) { const [a, b] = [...pointers.values()], r = svg.getBoundingClientRect();
+    const d = Math.hypot(a[0] - b[0], a[1] - b[1]); zoomAt(state.pinch.z * d / state.pinch.d / state.view.z, (a[0] + b[0]) / 2 - r.left, (a[1] + b[1]) / 2 - r.top); state.drag.moved = true; return; }
+  const d = state.drag; if (!d) return; const dx = e.clientX - d.x, dy = e.clientY - d.y;
+  if (!d.moved && Math.hypot(dx, dy) > 4) { d.moved = true; svg.classList.add('dragging'); svg.setPointerCapture(e.pointerId); }
+  if (d.moved) { state.view.cx = d.cx - dx / state.view.z; state.view.cy = d.cy - dy / state.view.z; applyView(); } });
+const endPtr = e => { pointers.delete(e.pointerId); if (pointers.size < 2) state.pinch = null; svg.classList.remove('dragging'); setTimeout(() => { if (!pointers.size) state.drag = null; }, 0); };
+svg.addEventListener('pointerup', endPtr); svg.addEventListener('pointercancel', endPtr);
+svg.addEventListener('click', () => { if (!state.drag?.moved) closePopup(); });
+svg.addEventListener('wheel', e => { e.preventDefault(); const r = svg.getBoundingClientRect(); zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top); }, {passive: false});
+$('#zin').onclick = () => { const [w, h] = size(); zoomAt(1.4, w / 2, h / 2); };
+$('#zout').onclick = () => { const [w, h] = size(); zoomAt(1 / 1.4, w / 2, h / 2); };
+$('#fit').onclick = () => fitTo(Object.keys(N).map(Number));
+$('#layersbtn').onclick = () => { $('#layers').hidden = !$('#layers').hidden; };
+$('#lyTraffic').onchange = drawZones;
+$('#lySteep').onchange = () => { L.steep.style.display = $('#lySteep').checked ? '' : 'none'; };
+$('#lyLabels').onchange = applyView;
+$('#lyExplored').onchange = () => redrawCurrent();
+new ResizeObserver(() => applyView()).observe(svg);
+
+// popup
+function openPopup(key, node) {
+  state.popup = {key, node}; const p = $('#popup'); const isP = key.startsWith('P:');
+  const ents = isP ? [] : PLACES[key].nodes.map(i => N[i].name);
+  p.innerHTML = `<h3>${placeLabel(key)}</h3><p>${isP ? 'Parking spot' + (RULES[key.slice(2)] ? ' · ' + RULES[key.slice(2)].join(', ') + ' only' : ' · open to all') : ents.length + ' entrance' + (ents.length > 1 ? 's' : '') + ': ' + ents.join(', ')}</p>
+   <div class="row"><button class="btn sm" data-a="from">Start here</button><button class="btn sm" data-a="to">Go here</button>${isP ? '' : '<button class="btn ghost sm" data-a="stop">Add stop</button>'}</div>`;
+  p.querySelectorAll('button').forEach(b => b.onclick = () => {
+    if (b.dataset.a === 'stop') { addStopRow(key); showTab('tour'); toast(`${placeLabel(key)} added to stops`); }
+    else { $('#' + b.dataset.a).value = key; showTab('dir'); runDirections(true); }
+    closePopup(); });
+  p.hidden = false; positionPopup();
+}
+function positionPopup() { const p = $('#popup'); if (p.hidden || !state.popup) return; const [w, h] = size(), v = state.view, n = state.popup.node;
+  p.style.left = ((n.x - v.cx) * v.z + w / 2) + 'px'; p.style.top = ((n.y - v.cy) * v.z + h / 2) + 'px'; }
+function closePopup() { $('#popup').hidden = true; state.popup = null; }
+let toastT; function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
+
+/* --------------------------------------------------------------- UI setup */
+function placeOptions(withParking = true, withNone = false) {
+  const groups = {'Academic': [], 'Facilities': [], 'Residences': [], 'Gates': []};
+  for (const [k, p] of Object.entries(PLACES)) {
+    const g = k.startsWith('AB') ? 'Academic' : k.startsWith('GATE') ? 'Gates' : /HOSTEL|FACULTY_RES|GUEST/.test(k) ? 'Residences' : 'Facilities';
+    groups[g].push(`<option value="${k}">${p.label}</option>`); }
+  let html = withNone ? '<option value="">(stay at last stop)</option>' : '';
+  for (const [g, o] of Object.entries(groups)) html += `<optgroup label="${g}">${o.join('')}</optgroup>`;
+  if (withParking) html += `<optgroup label="Parking (start in your vehicle)">${Object.keys(PARK).map(n => `<option value="P:${n}">${n}</option>`).join('')}</optgroup>`;
+  return html;
+}
+$('#from').innerHTML = placeOptions(); $('#to').innerHTML = placeOptions();
+$('#from').value = 'LIBRARY'; $('#to').value = 'AB4';
+function showTab(t) {
+  $$('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
+  ['dir', 'cmp', 'tour', 'trip'].forEach(k => $('#sec-' + k).hidden = k !== t);
+  state.tab = t;
+  if (t === 'dir') redrawCurrent();
+  if (t === 'cmp') runCompare();
+  if (t === 'tour') { if (state.tour) drawTour(); else solveTour(); }
+  if (t === 'trip') { renderClosureList(); $('#tripQuery').textContent = `Trip: ${placeLabel($('#from').value)} → ${placeLabel($('#to').value)} by ${state.veh === 'walk' ? 'foot' : state.veh === 'bike' ? '2-wheeler' : 'car'} (set on the Directions tab).`; redrawCurrent(); }
+}
+$$('.tab').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+$$('.mode').forEach(b => b.onclick = () => { state.veh = b.dataset.veh; $$('.mode').forEach(x => x.setAttribute('aria-pressed', x === b)); runDirections(true); });
+$('#swap').onclick = () => { const a = $('#from').value; $('#from').value = $('#to').value; $('#to').value = a; runDirections(true); };
+['#from', '#to', '#role', '#alg', '#wc', '#avoid'].forEach(s => $(s).addEventListener('change', () => runDirections(s === '#from' || s === '#to')));
+['#depart', '#arrive'].forEach(s => $(s).addEventListener('change', () => { drawZones(); runDirections(false); }));
+
+/* ------------------------------------------------------------- directions */
+const ICON = {
+  walk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="13" cy="4" r="2"/><path d="m9 21 2-6 3 3v3M7 12l3-4 3 1 2 3h3M11 15l1-5"/></svg>',
+  bike: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="5.5" cy="17" r="3"/><circle cx="18.5" cy="17" r="3"/><path d="M8.5 17h5l3-7h-4"/></svg>',
+  car: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 16V11l2-5h10l2 5v5M3 16h18"/></svg>',
+};
+function runDirections(refit) {
+  closePopup();
+  const c = cfg(), alg = $('#alg').value;
+  const defs = [['Fastest', 'time'], ['Most reliable', 'safe'], ['Shortest', 'distance']];
+  const routes = [];
+  for (const [label, metric] of defs) {
+    const cc = {...c, metric}, P = makeProblem(cc), r = runAlg(alg, P);
+    if (!r.found) { routes.push({label, metric, r, c: cc}); continue; }
+    const sig = routeSig(r), dup = routes.find(x => x.r.found && routeSig(x.r) === sig);
+    if (dup) { dup.also = (dup.also || []).concat(label); continue; }
+    const info = analyse(r, cc), samp = sample(mcLegs(r, cc));
+    const dl = $('#arrive').value ? (toMin($('#arrive').value) - cc.depart) * 60 : null;
+    const pOn = dl != null && dl > 0 ? samp.filter(x => x <= dl).length / samp.length : null;
+    routes.push({label, metric, r, c: cc, info, samp, pOn, dl});
+  }
+  state.routes = routes; state.sel = 0;
+  if (routes[0] && routes[0].r.found && refit) fitTo(routes.flatMap(x => x.r.found ? x.r.states.map(sn) : []), 70);
+  renderDirections(); redrawCurrent();
+  if (state.tab === 'cmp') runCompare();
+}
+function renderDirections() {
+  const out = $('#dirOut'), rs = state.routes;
+  if (!rs.length || !rs[0].r.found) {
+    const why = state.veh !== 'walk' && $('#from').value.startsWith('P:') === false && rs[0] && rs[0].r.found === false ? '' : '';
+    out.innerHTML = `<div class="why"><b>No route.</b> Every path is blocked for this traveller. Check closures, the wheelchair setting, or parking permissions for your role.${why}</div>`; return; }
+  const cards = rs.filter(x => x.r.found).map((x, i) => {
+    const pc = x.pOn == null ? '' : `<span class="chip ${x.pOn >= .9 ? 'good' : x.pOn >= .7 ? 'warn' : 'bad'}">${Math.round(x.pOn * 100)}% on time</span>`;
+    return `<button class="rcard" data-i="${i}" aria-pressed="${i === state.sel}">
+      <span class="t">${fmtDur(x.info.time)}</span><span class="tag">${[x.label].concat(x.also || []).join(' · ')}</span>
+      <span class="meta">${fmtM(x.info.dist)} · p95 ${fmtDur(x.samp[Math.floor(x.samp.length * .95)])} ${pc}</span></button>`; }).join('');
+  const x = rs.filter(r => r.r.found)[state.sel], c = x.c, r = x.r;
+  const startN = N[sn(r.states[0])], endN = N[sn(r.states[r.states.length - 1])];
+  let steps = `<li><span class="ic" style="background:var(--ink);color:var(--panel)">●</span><div><b>Start</b> at ${startN.name || PARK_NAME[startN.id]}<div class="d">leave ${fmt(c.depart)}</div></div><span></span></li>`;
+  let t = c.depart * 60;
+  x.info.legs.forEach((lg, i) => {
+    if (lg.kind !== 'move') { t += lg.time;
+      steps += `<li><span class="ic" style="background:${lg.kind === 'park' ? MODE_VAR[state.veh] : 'var(--fetch)'}">P</span><div><b>${lg.kind === 'park' ? 'Park' : 'Collect your ' + (state.veh === 'car' ? 'car' : '2-wheeler')}</b> at ${lg.name}<div class="d">${Math.round(lg.time / 60)} min ${lg.kind === 'park' ? 'to park and get out' : 'to get going'}</div></div><span class="d">${fmt(t / 60)}</span></li>`; return; }
+    t += lg.time;
+    const verb = lg.mode === 'car' ? 'Drive' : lg.mode === 'bike' ? 'Ride' : 'Walk';
+    const nxt = x.info.legs[i + 1]; const dest = nxt ? (nxt.name) : (endN.name);
+    const via = lg.road > lg.dist * .6 ? 'mostly on the campus road' : lg.lane > lg.dist * .6 ? 'mostly on lanes' : 'on lanes and roads';
+    const icon = lg.mode === 'fetch' ? 'walk' : lg.mode;
+    steps += `<li><span class="ic" style="background:${MODE_VAR[lg.mode]}">${ICON[icon]}</span><div><b>${verb} ${fmtM(lg.dist)}</b> to ${dest}<div class="d">${via} · ${fmtDur(lg.time)}</div></div><span class="d">${fmt(t / 60)}</span></li>`;
+  });
+  steps += `<li><span class="ic" style="background:var(--closed)">◆</span><div><b>Arrive</b> at ${endN.name}<div class="d">${placeLabel($('#to').value)}</div></div><span class="d">${fmt(t / 60)}</span></li>`;
+  const s = x.samp, q = p => s[Math.min(s.length - 1, Math.floor(s.length * p))];
+  const hist = histogram(s, x.dl);
+  const activeZones = ZONES.filter(z => zoneActive(z, c.depart)).map(z => z.name);
+  const metricNote = {time: 'minimises expected time', safe: 'minimises mean + 1.5 × std-dev per segment, so it avoids unpredictable stretches', distance: 'minimises metres'}[x.metric];
+  out.innerHTML = `<div class="cards">${cards}</div>
+    <ol class="steps">${steps}</ol>
+    <div class="box" style="display:flex;flex-direction:column;gap:8px">
+      <p class="eyebrow">Travel-time uncertainty · 4,000 simulated trips</p>
+      ${hist}
+      <div class="stats"><div><span>median</span><b>${fmtDur(q(.5))}</b></div><div><span>90th pct</span><b>${fmtDur(q(.9))}</b></div><div><span>95th pct</span><b>${fmtDur(q(.95))}</b></div><div><span>on time</span><b>${x.pOn == null ? '–' : Math.round(x.pOn * 100) + '%'}</b></div></div>
+      <p class="note">${activeZones.length ? 'Crowded at ' + fmt(c.depart) + ': ' + activeZones.join(', ') + '. ' : 'No crowd hotspots active at ' + fmt(c.depart) + '. '}This route ${metricNote}.${x.dl != null && x.dl > 0 ? ` Deadline: ${fmt(c.depart + x.dl / 60)}.` : ''}</p>
+    </div>
+    <div class="box" style="display:flex;flex-direction:column;gap:8px">
+      <p class="eyebrow">How the agent searched</p>
+      <div class="stats"><div><span>algorithm</span><b style="font-size:12px">${r.alg}</b></div><div><span>expanded</span><b>${r.expanded}</b></div><div><span>generated</span><b>${r.generated}</b></div><div><span>time</span><b>${r.ms.toFixed(1)} ms</b></div></div>
+      <p class="note">State = (location, mode). ${state.veh !== 'walk' ? 'Parking is an action inside the search, so A* chooses the parking spot itself. ' : ''}Red dots on the map are the states it expanded.</p>
+      <button class="btn ghost sm" id="replay">Replay the search</button>
+    </div>`;
+  out.querySelectorAll('.rcard').forEach(b => b.onclick = () => { state.sel = +b.dataset.i; renderDirections(); redrawCurrent(); });
+  $('#replay').onclick = () => replaySearch(r);
+}
+function histogram(s, dl) {
+  const lo = s[0], hi = s[s.length - 1], bins = 28, w = 300, h = 64, cnt = new Array(bins).fill(0);
+  const span = Math.max(hi - lo, 1);
+  for (const v of s) cnt[Math.min(bins - 1, Math.floor((v - lo) / span * bins))]++;
+  const mx = Math.max(...cnt); let bars = '';
+  cnt.forEach((c, i) => { const bh = c / mx * (h - 16), x = i * w / bins, mid = lo + (i + .5) * span / bins;
+    bars += `<rect x="${x + 1}" y="${h - 12 - bh}" width="${w / bins - 2}" height="${bh}" rx="1.5" fill="${dl != null && mid > dl ? 'var(--bad)' : 'var(--accent)'}" opacity="${dl != null && mid > dl ? .75 : .6}"/>`; });
+  let mark = '';
+  if (dl != null && dl > lo && dl < hi) { const x = (dl - lo) / span * w; mark = `<line x1="${x}" x2="${x}" y1="0" y2="${h - 12}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="3 2"/><text x="${Math.min(x + 4, w - 40)}" y="9" font-size="9.5" fill="var(--ink)">deadline</text>`; }
+  return `<svg class="hist" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${bars}${mark}<text x="0" y="${h - 1}" font-size="9.5" fill="var(--muted)">${fmtDur(lo)}</text><text x="${w}" y="${h - 1}" font-size="9.5" fill="var(--muted)" text-anchor="end">${fmtDur(hi)}</text></svg>`;
+}
+let replayT;
+function replaySearch(r) {
+  clearInterval(replayT); let k = 0; const step = Math.max(1, Math.ceil(r.explored.length / 90));
+  clear('route'); clear('over');
+  replayT = setInterval(() => { k += step; drawExplored(r, k); if (k >= r.explored.length) { clearInterval(replayT); redrawCurrent(); } }, 22);
+}
+function redrawCurrent() {
+  clearInterval(replayT); clearRoutes();
+  if (state.tab === 'tour') { drawTour(); return; }
+  if (state.tab === 'cmp' && state.cmpSel) { drawExplored(state.cmpSel); drawRoute(state.cmpSel); return; }
+  const rs = state.routes.filter(x => x.r.found); if (!rs.length) return;
+  rs.forEach((x, i) => { if (i === state.sel) return; const polys = routePolylines(x.r);
+    for (const p of polys) { const pe = el('path', {d: path(p.pts), class: 'r-alt', ...nse}, L.alts); pe.addEventListener('click', ev => { ev.stopPropagation(); state.sel = i; renderDirections(); redrawCurrent(); }); } });
+  const cur = rs[state.sel]; drawExplored(cur.r); drawRoute(cur.r);
+}
+
+/* --------------------------------------------------------------- compare */
+function runCompare() {
+  const c = cfg(), algs = [['BFS', 'bfs'], ['DFS', 'dfs'], ['IDDFS', 'iddfs'], ['UCS (Dijkstra)', 'ucs'], ['Greedy best-first', 'greedy'], ['A*', 'astar'], ['Weighted A* (w=2)', 'wastar']];
+  if (c.veh === 'walk') algs.push(['A* + landmarks', 'alt']);
+  $('#cmpQuery').textContent = `${placeLabel($('#from').value)} → ${placeLabel($('#to').value)}, ${state.veh === 'walk' ? 'on foot' : state.veh === 'bike' ? '2-wheeler' : 'car'}`;
+  const rows = algs.map(([name, a]) => { const r = runAlg(a === 'alt' ? 'astar' : a, makeProblem({...c, alt: a === 'alt'})); r.label = name; return r; });
+  const opt = rows.find(r => r.label.startsWith('UCS')).cost, mx = Math.max(...rows.map(r => r.expanded));
+  state.cmp = rows;
+  $('#cmpTable').innerHTML = `<tr><th>Algorithm</th><th>Cost</th><th>Steps</th><th>Expanded</th><th>ms</th></tr>` + rows.map((r, i) => {
+    const ok = r.found && Math.abs(r.cost - opt) < 1e-6;
+    return `<tr class="click${state.cmpSel === r ? ' sel' : ''}" data-i="${i}"><td>${r.label} ${r.found ? (ok ? '<span class="chip good">optimal</span>' : `<span class="chip bad">+${((r.cost / opt - 1) * 100).toFixed(0)}%</span>`) : '<span class="chip bad">none</span>'}<div class="bar" style="width:${r.expanded / mx * 100}%"></div></td>
+      <td>${r.found ? (r.cost / 60).toFixed(2) : '–'}</td><td>${r.actions.length}</td><td>${r.expanded}</td><td>${r.ms.toFixed(1)}</td></tr>`; }).join('');
+  $$('#cmpTable tr.click').forEach(tr => tr.onclick = () => { state.cmpSel = rows[+tr.dataset.i]; runCompareHighlight(); });
+  const a = rows.find(r => r.label === 'A*'), u = rows.find(r => r.label.startsWith('UCS')), b = rows[0];
+  $('#cmpNote').innerHTML = `A* returns the same optimal cost as UCS while expanding <b>${u.expanded - a.expanded}</b> fewer states (${Math.round((1 - a.expanded / u.expanded) * 100)}%). Its heuristic is straight-line distance divided by the fastest speed still available, which never overestimates. BFS minimises the number of steps, not time, and DFS takes the first path it stumbles on. IDDFS gets BFS's answer with little memory but repeats work every iteration.`;
+  if (!state.cmpSel || !rows.includes(state.cmpSel)) state.cmpSel = a;
+  runCompareHighlight();
+}
+function runCompareHighlight() { $$('#cmpTable tr.click').forEach(tr => tr.classList.toggle('sel', state.cmp[+tr.dataset.i] === state.cmpSel)); redrawCurrent(); }
+$('#runAvg').onclick = () => {
+  $('#cmpAvg').innerHTML = '<p class="note">Running…</p>';
+  setTimeout(() => {
+    const keys = Object.keys(PLACES), agg = {}, algs = [['UCS', 'ucs', false], ['A*', 'astar', false], ['A* + ALT', 'astar', true], ['Greedy', 'greedy', false], ['BFS', 'bfs', false]];
+    let pairs = 0;
+    for (let i = 0; i < keys.length; i++) for (let j = i + 1; j < keys.length; j++) { pairs++;
+      for (const [name, a, alt] of algs) { const r = runAlg(a, makeProblem({starts: PLACES[keys[i]].nodes, goals: PLACES[keys[j]].nodes, veh: 'walk', role: 'student', wc: false, avoid: 1, metric: 'time', depart: 600, riskK: 1.5, known: new Map(), alt}));
+        const s = agg[name] ||= {exp: 0, cost: 0}; s.exp += r.expanded; s.cost += r.cost; } }
+    const opt = agg.UCS.cost;
+    $('#cmpAvg').innerHTML = `<div class="tablewrap"><table><tr><th>Algorithm</th><th>Avg expanded</th><th>Cost vs optimal</th></tr>${Object.entries(agg).map(([k, v]) => `<tr><td>${k}</td><td>${(v.exp / pairs).toFixed(1)}</td><td>${(v.cost / opt).toFixed(3)}×</td></tr>`).join('')}</table></div><p class="note" style="margin-top:6px">${pairs} pairs, departing 10:00.</p>`;
+  }, 30);
+};
+
+/* -------------------------------------------------------------- multi-stop */
+$('#tStart').innerHTML = placeOptions(false); $('#tEnd').innerHTML = placeOptions(false, true);
+$('#tStart').value = 'BOYS_HOSTEL'; $('#tEnd').value = 'AB4';
+const stopSel = v => `<select class="sp" aria-label="Stop">${placeOptions(false).replace(`value="${v}"`, `value="${v}" selected`)}</select>`;
+function addStopRow(place = 'LIBRARY', opens = '', deadline = '', svc = 5) {
+  const d = document.createElement('div'); d.className = 'stoprow';
+  d.innerHTML = `<label class="f fp">Place${stopSel(place)}</label><button class="x" aria-label="Remove stop">×</button><label class="f">Opens<input type="time" class="so" value="${opens}"></label><label class="f">Deadline<input type="time" class="sd" value="${deadline}"></label><label class="f svc">Minutes<input type="number" class="ss" min="0" max="120" value="${svc}"></label>`;
+  d.querySelector('.x').onclick = () => { d.remove(); refreshPrecOptions(); };
+  d.querySelector('.sp').onchange = refreshPrecOptions;
+  $('#stops').appendChild(d); refreshPrecOptions();
+}
+function stopKeys() { return $$('#stops .sp').map(s => s.value); }
+function precOptions(v) { return stopKeys().map(k => `<option value="${k}"${k === v ? ' selected' : ''}>${PLACES[k].label}</option>`).join(''); }
+function addPrecRow(a, b) {
+  const d = document.createElement('div'); d.className = 'prec';
+  d.innerHTML = `<select class="pa" aria-label="First">${precOptions(a)}</select><span class="muted small">before</span><select class="pb" aria-label="Then">${precOptions(b)}</select><button class="x" style="border:none;background:none;color:var(--muted);font-size:18px;cursor:pointer" aria-label="Remove rule">×</button>`;
+  d.querySelector('.x').onclick = () => d.remove(); $('#precs').appendChild(d);
+}
+function refreshPrecOptions() { $$('#precs .prec').forEach(d => { const a = d.querySelector('.pa'), b = d.querySelector('.pb'), va = a.value, vb = b.value; a.innerHTML = precOptions(va); b.innerHTML = precOptions(vb); }); }
+function loadExample() {
+  $('#stops').replaceChildren(); $('#precs').replaceChildren();
+  addStopRow('HEALTH', '', '09:15', 5); addStopRow('ADMIN', '09:10', '09:20', 10); addStopRow('LIBRARY', '', '', 8);
+  addStopRow('MESS3', '09:30', '', 15); addStopRow('AB3', '', '10:00', 5); addPrecRow('LIBRARY', 'AB3');
+}
+loadExample();
+$('#addStop').onclick = () => addStopRow('AB1');
+$('#addPrec').onclick = () => { const k = stopKeys(); if (k.length >= 2) addPrecRow(k[0], k[1]); };
+$('#solveTour').onclick = () => solveTour();
+$('#tooTight').onclick = () => { const first = $('#stops .stoprow'); if (first) { first.querySelector('.sp').value = 'AB5'; first.querySelector('.sd').value = '09:03'; refreshPrecOptions(); } solveTour(); toast('AB5 now has a 09:03 deadline'); };
+
+function planner() {
+  const stops = $$('#stops .stoprow').map(r => ({place: r.querySelector('.sp').value, opens: toMin(r.querySelector('.so').value) === Infinity ? -Infinity : toMin(r.querySelector('.so').value), deadline: toMin(r.querySelector('.sd').value), svc: +r.querySelector('.ss').value || 0}));
+  const uniq = [...new Set(stops.map(s => s.place))]; if (uniq.length !== stops.length) return {error: 'Each place can appear once. Remove the duplicate stop.'};
+  if (!stops.length) return {error: 'Add at least one stop.'};
+  const start = $('#tStart').value, end = $('#tEnd').value || null, endBy = end ? toMin($('#tEndBy').value) : Infinity, depart = toMin($('#tDepart').value || '09:00');
+  const prec = $$('#precs .prec').map(d => [d.querySelector('.pa').value, d.querySelector('.pb').value]).filter(([a, b]) => a !== b);
+  const base = {veh: 'walk', role: $('#role').value, wc: $('#wc').checked, avoid: $('#avoid').checked ? 1.6 : 1, metric: 'time', depart, riskK: 1.5, known: state.known, alt: false};
+  const pts = [start, ...stops.map(s => s.place), ...(end ? [end] : [])];
+  const T = {}, RT = {}; let expanded = 0; const t0 = performance.now();
+  for (const a of pts) for (const b of pts) { if (a === b || T[a + '>' + b] != null) continue;
+    const r = astar(makeProblem({...base, starts: PLACES[a].nodes, goals: PLACES[b].nodes})); expanded += r.expanded;
+    T[a + '>' + b] = r.found ? r.cost / 60 : Infinity; RT[a + '>' + b] = r; }
+  const idx = Object.fromEntries(stops.map((s, i) => [s.place, i]));
+  const tr = (a, b) => a === b ? 0 : T[a + '>' + b];
+  function simulate(order) { let t = depart, here = start, late = 0; const sched = [];
+    for (const p of order) { const s = stops[idx[p]], arr = t + tr(here, p), wait = Math.max(0, s.opens - arr);
+      late += Math.max(0, arr - s.deadline); sched.push({place: p, arrive: arr, wait, deadline: s.deadline, ok: arr <= s.deadline + 1e-9, svc: s.svc}); t = arr + wait + s.svc; here = p; }
+    if (end) { const arr = t + tr(here, end); late += Math.max(0, arr - endBy); sched.push({place: end, arrive: arr, wait: 0, deadline: endBy, ok: arr <= endBy + 1e-9, end: true, svc: 0}); t = arr; }
+    const pos = Object.fromEntries(order.map((p, i) => [p, i])); const pv = prec.filter(([a, b]) => pos[a] > pos[b]).length;
+    return {finish: t, late, sched, pv}; }
+  const cost = o => { const s = simulate(o); return s.finish + 100 * s.late + 1000 * s.pv; };
+  function csp(fc = true, bb = true, vo = true) {
+    const st = {nodes: 0, pruned_deadline: 0, pruned_forward: 0, pruned_bound: 0, pruned_order_rule: 0}, t1 = performance.now();
+    const before = {}; prec.forEach(([a, b]) => (before[b] ||= new Set()).add(a));
+    let best = {f: Infinity, o: null};
+    const lb = (t, here, rem) => { if (!rem.size) return t + (end ? tr(here, end) : 0); let far = 0, svc = 0; for (const p of rem) { far = Math.max(far, tr(here, p)); svc += stops[idx[p]].svc; } return t + far + svc; };
+    (function bt(order, t, here, rem) { st.nodes++;
+      if (!rem.size) { const f = t + (end ? tr(here, end) : 0); if (f <= endBy + 1e-9 && f < best.f) best = {f, o: [...order]}; return; }
+      let cand = [...rem]; if (vo) cand.sort((a, b) => (stops[idx[a]].deadline - stops[idx[b]].deadline) || (tr(here, a) - tr(here, b)));
+      for (const p of cand) {
+        if (before[p] && [...before[p]].some(x => rem.has(x))) { st.pruned_order_rule++; continue; }
+        const s = stops[idx[p]], arr = t + tr(here, p); if (arr > s.deadline + 1e-9) { st.pruned_deadline++; continue; }
+        const t2 = Math.max(arr, s.opens) + s.svc, rem2 = new Set(rem); rem2.delete(p);
+        if (fc) { if ([...rem2].some(q => t2 + tr(p, q) > stops[idx[q]].deadline + 1e-9) || (end && t2 + tr(p, end) > endBy + 1e-9)) { st.pruned_forward++; continue; } }
+        if (bb && lb(t2, p, rem2) >= best.f) { st.pruned_bound++; continue; }
+        order.push(p); bt(order, t2, p, rem2); order.pop(); }
+    })([], depart, start, new Set(stops.map(s => s.place)));
+    st.ms = +(performance.now() - t1).toFixed(2);
+    return {method: fc ? 'CSP: backtracking + forward checking + bound' : 'Plain backtracking', order: best.o, stats: st, work: st.nodes};
+  }
+  function neighbour(o, r) { o = o.slice(); const n = o.length; if (n < 2) return o; let i = Math.floor(r() * n), j = Math.floor(r() * n); while (j === i) j = Math.floor(r() * n); if (i > j) [i, j] = [j, i];
+    const m = r(); if (m < .33) [o[i], o[j]] = [o[j], o[i]]; else if (m < .66) o.splice(j, 0, o.splice(i, 1)[0]); else { const seg = o.slice(i, j + 1).reverse(); o.splice(i, seg.length, ...seg); } return o; }
+  function anneal(iters = 4000, restarts = 3) { const r = rng(11), t1 = performance.now(); let best = null, bc = Infinity, evals = 0;
+    for (let k = 0; k < restarts; k++) { let cur = stops.map(s => s.place); for (let i = cur.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [cur[i], cur[j]] = [cur[j], cur[i]]; }
+      let cc = cost(cur); evals++;
+      for (let i = 0; i < iters; i++) { const T = 30 * Math.pow(0.05 / 30, i / (iters - 1)), nx = neighbour(cur, r), c = cost(nx); evals++;
+        if (c < cc || r() < Math.exp((cc - c) / T)) { cur = nx; cc = c; } if (cc < bc) { bc = cc; best = cur.slice(); } } }
+    return {method: 'Simulated annealing', order: best, work: evals, stats: {evaluations: evals, ms: +(performance.now() - t1).toFixed(1)}}; }
+  function hill(restarts = 10) { const r = rng(5), t1 = performance.now(); let best = null, bc = Infinity, evals = 0;
+    for (let k = 0; k < restarts; k++) { let cur = stops.map(s => s.place); for (let i = cur.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [cur[i], cur[j]] = [cur[j], cur[i]]; }
+      let cc = cost(cur);
+      for (;;) { let bn = null, bnc = Infinity; const n = cur.length;
+        for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const a = cur.slice(); [a[i], a[j]] = [a[j], a[i]]; const b = cur.slice(); const seg = b.slice(i, j + 1).reverse(); b.splice(i, seg.length, ...seg);
+          for (const o of [a, b]) { evals++; const c = cost(o); if (c < bnc) { bnc = c; bn = o; } } }
+        if (!bn || bnc >= cc - 1e-9) break; cur = bn; cc = bnc; }
+      if (cc < bc) { bc = cc; best = cur; } }
+    return {method: 'Hill climbing (10 restarts)', order: best, work: evals, stats: {evaluations: evals, ms: +(performance.now() - t1).toFixed(1)}}; }
+  function brute() { if (stops.length > 8) return {method: 'Brute force', order: null, skipped: true, work: 0, stats: {}};
+    const t1 = performance.now(); let best = null, bf = Infinity, n = 0;
+    (function perm(a, k) { if (k === a.length) { n++; const s = simulate(a); if (!s.late && !s.pv && s.finish < bf) { bf = s.finish; best = a.slice(); } return; }
+      for (let i = k; i < a.length; i++) { [a[k], a[i]] = [a[i], a[k]]; perm(a, k + 1); [a[k], a[i]] = [a[i], a[k]]; } })(stops.map(s => s.place), 0);
+    return {method: 'Brute force (all orders)', order: best, work: n, stats: {orders: n, ms: +(performance.now() - t1).toFixed(1)}}; }
+  function explain() { const out = [];
+    for (const s of stops) { const direct = depart + tr(start, s.place); if (direct > s.deadline) out.push(`${PLACES[s.place].label}: even going there first you arrive ${fmt(direct)}, after its ${fmt(s.deadline)} deadline.`); }
+    if (!out.length) out.push('Each stop can be reached in time on its own, but no single order meets every deadline and order rule together. Relax a deadline or drop a stop. The local-search result below shows the least-late order.');
+    return out; }
+  function onTime(order, n = 2500) { if (!order) return 0; const legs = []; const seq = [start, ...order, ...(end ? [end] : [])];
+    for (let i = 0; i + 1 < seq.length; i++) { const r = RT[seq[i] + '>' + seq[i + 1]]; legs.push(mcLegs(r, {...base, starts: PLACES[seq[i]].nodes, goals: PLACES[seq[i + 1]].nodes})); }
+    const r = rng(3); let ok = 0;
+    for (let k = 0; k < n; k++) { let t = depart, good = true;
+      order.forEach((p, i) => { let leg = 0; for (const [m, sd] of legs[i]) leg += lognorm(r, m, sd); t += leg / 60; const s = stops[idx[p]]; if (t > s.deadline) good = false; t = Math.max(t, s.opens) + s.svc; });
+      if (end) { let leg = 0; for (const [m, sd] of legs[order.length]) leg += lognorm(r, m, sd); t += leg / 60; if (t > endBy) good = false; }
+      if (good) ok++; }
+    return ok / n; }
+  return {stops, start, end, endBy, depart, prec, T, RT, tr, simulate, csp, anneal, hill, brute, explain, onTime, matrix: {pairs: Object.keys(T).length, expanded, ms: performance.now() - t0}};
+}
+function solveTour() {
+  const tp = planner(); const out = $('#tourOut');
+  if (tp.error) { out.innerHTML = `<div class="why">${tp.error}</div>`; return; }
+  const main = tp.csp(), plain = tp.csp(false, false, false), sa = tp.anneal(), hc = tp.hill(), bf = tp.brute();
+  const shown = main.order ? main : sa;
+  state.tour = {tp, shown, feasible: !!main.order};
+  const sim = tp.simulate(shown.order);
+  const pOn = main.order ? tp.onTime(main.order) : null;
+  let sched = `<div class="it"><span class="n" style="background:var(--ink);color:var(--panel)">●</span><div><b>${PLACES[tp.start].label}</b><div class="small muted">leave</div></div><span class="num">${fmt(tp.depart)}</span></div>`;
+  sim.sched.forEach((s, i) => { const lbl = PLACES[s.place].label;
+    sched += `<div class="it"><span class="n${s.end ? ' end' : ''}${s.ok ? '' : ' late'}">${s.end ? '◆' : i + 1}</span><div><b>${lbl}</b><div class="small muted">${isFinite(s.deadline) ? 'deadline ' + fmt(s.deadline) : 'no deadline'}${s.wait > .05 ? ` · wait ${s.wait.toFixed(1)} min to open` : ''}${s.svc ? ` · ${s.svc} min there` : ''}${s.ok ? '' : ` · <span style="color:var(--bad);font-weight:600">late by ${(s.arrive - s.deadline).toFixed(1)} min</span>`}</div></div><span class="num">${fmt(s.arrive)}</span></div>`; });
+  const res = [main, plain, bf, sa, hc].map(r => { const s = r.order ? tp.simulate(r.order) : null; const feas = s && !s.late && !s.pv;
+    return `<tr><td>${r.method}</td><td>${r.skipped ? 'skipped (&gt; 8 stops)' : s ? (feas ? fmt(s.finish) : '<span class="chip bad">late</span>') : '<span class="chip bad">infeasible</span>'}</td><td>${r.skipped ? '–' : r.work.toLocaleString()}</td><td>${r.stats.ms ?? '–'}</td></tr>`; }).join('');
+  const st = main.stats;
+  out.innerHTML = `${main.order ? `<div class="box" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><p class="eyebrow">Best order</p><b style="font-size:17px">Finish ${fmt(sim.finish)}</b></div><span class="chip ${pOn >= .9 ? 'good' : pOn >= .7 ? 'warn' : 'bad'}" title="Monte Carlo with uncertain travel times">${Math.round(pOn * 100)}% chance every deadline holds</span></div>`
+      : `<div class="why"><b>No order meets every constraint.</b><br>${tp.explain().join('<br>')}</div><p class="note">Showing the least-late order found by simulated annealing.</p>`}
+    <div class="sched">${sched}</div>
+    <div class="box small"><b>CSP search:</b> ${st.nodes} nodes; pruned ${st.pruned_forward} by forward checking, ${st.pruned_deadline} by deadline checks, ${st.pruned_bound} by the bound and ${st.pruned_order_rule} by order rules. Travel times come from ${tp.matrix.pairs} A* searches (${tp.matrix.expanded.toLocaleString()} states expanded).</div>
+    <p class="eyebrow">Solvers compared</p>
+    <div class="tablewrap"><table><tr><th>Method</th><th>Finish</th><th>Work</th><th>ms</th></tr>${res}</table></div>
+    <p class="note">Work = search nodes (CSP), orders tried (brute force) or cost evaluations (local search).</p>`;
+  drawTour();
+}
+function drawTour() {
+  clearRoutes(); const T = state.tour; if (!T || !T.shown.order) return;
+  const {tp, shown} = T, seq = [tp.start, ...shown.order, ...(tp.end ? [tp.end] : [])], all = [];
+  const sim = tp.simulate(shown.order);
+  for (let i = 0; i + 1 < seq.length; i++) { const r = tp.RT[seq[i] + '>' + seq[i + 1]]; if (r && r.found) { drawRoute(r, {noEnds: true, color: i % 2 ? 'var(--accent)' : 'var(--walk)'}); all.push(...r.states.map(sn)); } }
+  seq.forEach((p, i) => { const r = i === 0 ? tp.RT[seq[0] + '>' + seq[1]] : tp.RT[seq[i - 1] + '>' + seq[i]]; if (!r || !r.found) return;
+    const n = N[i === 0 ? sn(r.states[0]) : sn(r.states[r.states.length - 1])], g = pin('over', n.x, n.y);
+    const late = i > 0 && !sim.sched[i - 1].ok;
+    el('circle', {r: 11, fill: i === 0 ? 'var(--ink)' : late ? 'var(--bad)' : 'var(--accent)', stroke: 'var(--panel)', 'stroke-width': 2.5}, g);
+    el('text', {x: 0, y: 4, 'text-anchor': 'middle', class: 'ptxt', style: 'font-size:11px', fill: i === 0 ? 'var(--panel)' : '#fff'}, g).textContent = i === 0 ? 'S' : (tp.end && i === seq.length - 1 ? 'E' : i); });
+  if (state.tab === 'tour' && !T.fitted) { fitTo(all, 60); T.fitted = true; }
+}
+
+/* ---------------------------------------------------- closures & live trip */
+$$('.seg button').forEach(b => b.onclick = () => { state.tool = b.dataset.tool; $$('.seg button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  svg.classList.toggle('tool', state.tool !== 'none');
+  const hint = {all: 'Click a path to close it for everyone', car: 'Click a road to close it for cars only', surprise: 'Click a path to hide a closure the agent will discover'}[state.tool];
+  $('#toolhint').hidden = !hint; $('#toolhint').textContent = hint || ''; drawClosures(); });
+function toggleClosure(eid) {
+  const t = state.tool;
+  if (t === 'surprise') { state.known.delete(eid); state.surprise.has(eid) ? state.surprise.delete(eid) : state.surprise.add(eid); }
+  else { state.surprise.delete(eid); const cur = state.known.get(eid), want = t === 'car' ? ['car'] : ['walk', 'bike', 'car'];
+    if (cur && cur.size === want.length) state.known.delete(eid); else state.known.set(eid, new Set(want)); }
+  drawClosures(); renderClosureList(); if (t !== 'surprise') { runDirections(false); state.tour = null; }
+}
+function renderClosureList() {
+  const items = [...state.known].map(([eid, m]) => ({eid, kind: m.has('walk') ? 'Closed for everyone' : 'Closed for cars', c: 'var(--closed)'}))
+    .concat([...state.surprise].map(eid => ({eid, kind: 'Surprise closure', c: 'var(--surprise)'})));
+  const near = eid => { const e = E[eid], mid = {x: (N[e.u].x + N[e.v].x) / 2, y: (N[e.u].y + N[e.v].y) / 2}; let best = null, bd = Infinity;
+    for (const [k, p] of Object.entries(PLACES)) for (const n of p.nodes) { const d = Math.hypot(N[n].x - mid.x, N[n].y - mid.y); if (d < bd) { bd = d; best = p.label; } } return `${e.layer} near ${best}`; };
+  $('#clist').innerHTML = items.length ? items.map(i => `<div class="citem"><span><i style="background:${i.c}"></i>${i.kind} · ${near(i.eid)}</span><button class="btn ghost sm" data-e="${i.eid}">Reopen</button></div>`).join('') : '<p class="note">No closures yet.</p>';
+  $$('#clist button').forEach(b => b.onclick = () => { const e = +b.dataset.e; state.known.delete(e); state.surprise.delete(e); drawClosures(); renderClosureList(); runDirections(false); state.tour = null; });
+}
+$('#clearC').onclick = () => { state.known.clear(); state.surprise.clear(); drawClosures(); renderClosureList(); runDirections(false); state.tour = null; };
+$('#autoSurprise').onclick = () => {
+  const x = state.routes.find(r => r.r.found); if (!x) return toast('No route to put a closure on');
+  const moves = x.r.actions.filter(a => a[0] === 'move' && ['lane', 'road'].includes(E[a[1]].layer)).map(a => a[1]);
+  if (!moves.length) return; const eid = moves[Math.floor(moves.length * 0.55)];
+  state.surprise.add(eid); drawClosures(); renderClosureList(); toast('Surprise closure placed ahead on the route');
+};
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+$('#stopTrip').onclick = () => { if (state.trip) state.trip.stop = true; };
+$('#startTrip').onclick = async () => {
+  if (state.trip) return; showTab('trip');
+  const trip = state.trip = {stop: false}; $('#startTrip').disabled = true; $('#stopTrip').disabled = false;
+  const log = $('#tripLog'); log.innerHTML = '';
+  const add = h => { const li = document.createElement('li'); li.innerHTML = h; log.appendChild(li); };
+  const belief = new Map([...state.known].map(([k, v]) => [k, new Set(v)]));
+  const base = cfg({known: belief, alt: false});
+  let P = makeProblem(base), r = astar(P);
+  if (!r.found) { add('No route even before leaving.'); finishTrip(); return; }
+  add(`Planned ${fmtM(analyse(r, base).dist)}, about ${fmtDur(r.cost)}. The agent knows about ${belief.size} closure${belief.size === 1 ? '' : 's'}.`);
+  clearRoutes(); drawRoute(r);
+  const walked = []; let states = r.states, actions = r.actions, i = 0, cur = states[0];
+  const dot = pin('over', N[sn(cur)].x, N[sn(cur)].y); el('circle', {r: 13, fill: 'var(--accent)', opacity: .22}, dot); el('circle', {r: 7, fill: 'var(--accent)', stroke: 'var(--panel)', 'stroke-width': 3}, dot);
+  const sObj = scaled.over[scaled.over.length - 1];
+  const moveDot = (x, y) => { sObj.x = x; sObj.y = y; dot.setAttribute('transform', `translate(${x} ${y}) scale(${1 / state.view.z})`); };
+  const trail = el('path', {class: 'r-line', stroke: 'var(--ink)', 'stroke-opacity': .35, 'stroke-dasharray': '1 6', ...nse}, L.alts); const trailPts = [[N[sn(cur)].x, N[sn(cur)].y]];
+  while (!P.goal(cur) && !trip.stop) {
+    const n = sn(cur);
+    const seen = ADJ[n].filter(eid => state.surprise.has(eid) && !belief.has(eid));
+    if (seen.length) { seen.forEach(eid => belief.set(eid, new Set(['walk', 'bike', 'car'])));
+      const upcoming = new Set(actions.slice(i).filter(a => a[0] === 'move').map(a => a[1]));
+      if (seen.some(e => upcoming.has(e))) {
+        const P2 = makeProblem({...base, known: belief, init: [cur]}), r2 = astar(P2);
+        add(`<b>Closure spotted</b> near ${N[n].name || 'the path'}; replanning from here with A* (${r2.expanded} states expanded).`);
+        if (!r2.found) { add('<b>Stuck:</b> every way forward is closed.'); break; }
+        add(`New plan: ${fmtDur(r2.cost)} remaining.`);
+        P = P2; states = r2.states; actions = r2.actions; i = 0; clear('route'); drawRoute(r2, {noEnds: true});
+        state.surprise.forEach(eid => { if (belief.has(eid)) el('path', {d: seg(E[eid]), class: 'c-closed', ...nse}, L.closures); });
+        await sleep(500); continue; }
+    }
+    if (i >= actions.length) break;
+    const a = actions[i], nxt = states[i + 1];
+    if (a[0] !== 'move') { add(a[0] === 'park' ? `Parked at ${a[1]}.` : `Collected the vehicle at ${a[1]}.`); await sleep(450); }
+    else { const from = N[sn(cur)], to = N[sn(nxt)], dur = Math.max(60, E[a[1]].len * 9), t0 = performance.now();
+      while (true) { const k = Math.min(1, (performance.now() - t0) / dur); moveDot(from.x + (to.x - from.x) * k, from.y + (to.y - from.y) * k); if (k >= 1 || trip.stop) break; await new Promise(requestAnimationFrame); }
+      trailPts.push([to.x, to.y]); trail.setAttribute('d', path(trailPts)); }
+    walked.push(a); cur = nxt; i++;
+  }
+  if (P.goal(cur)) add(`<b>Arrived</b> at ${N[sn(cur)].name}.`);
+  else if (trip.stop) add('Trip stopped.');
+  finishTrip();
+  function finishTrip() { state.trip = null; $('#startTrip').disabled = false; $('#stopTrip').disabled = true; }
+};
+
+/* ------------------------------------------------------------------ boot */
+drawBase(); drawZones(); drawClosures();
+requestAnimationFrame(() => { fitTo(Object.keys(N).map(Number)); state.tab = 'dir'; runDirections(false); });
+</script>

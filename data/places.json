@@ -1,0 +1,32 @@
+{
+  "_comment": "Groups the surveyed entrance points into navigable places. Routing to a place means reaching ANY of its entrances (multi-goal search). Edit freely.",
+  "places": {
+    "AB1":                {"label": "Academic Block 1",        "entrances": ["AB1 Entrance", "AB1 Entrance 2"]},
+    "AB2":                {"label": "Academic Block 2",        "entrances": ["AB2 Entrance", "AB2 Entrance2"]},
+    "AB3":                {"label": "Academic Block 3",        "entrances": ["AB3 Entrane", "AB3 Entrance2"]},
+    "AB4":                {"label": "Academic Block 4",        "entrances": ["AB 4 Entrance", "AB 4 Entrance2"]},
+    "AB5":                {"label": "Academic Block 5",        "entrances": ["AB5 Entrace", "AB5 Entrance2"]},
+    "AB6":                {"label": "Academic Block 6",        "entrances": ["AB6 Entrance", "AB 6 Entrance2"]},
+    "AB7":                {"label": "Academic Block 7",        "entrances": ["AB7 Entrance"]},
+    "AB8":                {"label": "Academic Block 8",        "entrances": ["AB8 Entrance"]},
+    "ADMIN":              {"label": "Administrative Block",    "entrances": ["Administrative Block Entrance", "Administrative Block Entrance 2"]},
+    "LIBRARY":            {"label": "Central Library",         "entrances": ["Central Library Entrance"]},
+    "CONVENTION":         {"label": "Convention Centre",       "entrances": ["Conventional Centre Entrance"]},
+    "AMPHITHEATRE":       {"label": "Amphitheatre",            "entrances": ["Amphitheatre Entrance1", "Amphitheatre Entrance 2"]},
+    "KITCHEN":            {"label": "Central Kitchen",         "entrances": ["Central Kitchen Entrance"]},
+    "MESS3":              {"label": "Mess 3",                  "entrances": ["Mess3 Entrance"]},
+    "UTILITY":            {"label": "Utility Building",        "entrances": ["Utility Building Entrance"]},
+    "GROUND":             {"label": "Sports Ground",           "entrances": ["Ground Entrance", "Ground Entrance 2", "Ground Entrance 3", "Ground Entrance 4"]},
+    "BASKETBALL":         {"label": "Basketball Court",        "entrances": ["Basketball Court Entrance"]},
+    "HEALTH":             {"label": "Health Centre",           "entrances": ["Health Centre Entrance"]},
+    "GIRLS_HOSTEL":       {"label": "Girls' Hostel",           "entrances": ["Girl's Hostel Entrance", "Girls' Hostel Entrance2"]},
+    "BOYS_HOSTEL":        {"label": "Boys' Hostel",            "entrances": ["Boys' Hotel Entrance", "Boys' Hostel Entrance2"]},
+    "FACULTY_RES":        {"label": "Faculty Residence",       "entrances": ["Faculty Residence Entrance", "Faculty Residence Entrance2"]},
+    "GUEST_HOUSE":        {"label": "Guest House",             "entrances": ["Guest House Entrance"]},
+    "UG_PARKING1":        {"label": "UG Parking 1 (foot)",     "entrances": ["UG Parking1 Entrane"]},
+    "UG_PARKING2":        {"label": "UG Parking 2 (foot)",     "entrances": ["UG Parking2 Entrance", "UG Parking2 Exit"]},
+    "GATE1":              {"label": "Gate No. 1",              "entrances": ["Gate No.1"]},
+    "GATE2":              {"label": "Gate No. 2",              "entrances": ["Gate No.2"]},
+    "GATE3":              {"label": "Gate No. 3",              "entrances": ["Gate No.3"]}
+  }
+}
